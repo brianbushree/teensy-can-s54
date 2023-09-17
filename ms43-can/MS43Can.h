@@ -237,6 +237,22 @@ class MS43_DME2_Frame {
 
 };
 
+typedef enum MS43_DME3_SPORT_BUTTON_STATUS {
+
+  // Sport Button On (requested by SMG)
+  SPORT_BUTTON_SPORT_ON_SMG_TRANS,
+
+  // Sport Button Off
+  SPORT_BUTTON_OFF,
+
+  // Sport Button On
+  SPORT_BUTTON_ON,
+
+  // Sport Button Error
+  SPORT_BUTTON_ERROR
+
+} MS43_DME3_SPORT_BUTTON_STATUS;
+
 // DME3 : 0x338
 // Refresh Rate: 1000ms and at signal change
 class MS43_DME3_Frame {
@@ -249,6 +265,10 @@ class MS43_DME3_Frame {
     // Create a MS43_DME2_Frame view from frame
     MS43_DME3_Frame(uint8_t (&f)[8]);
 
+    // STATE_SOF_CAN:
+    // Sport Button Status
+    // init : off
+    MS43_DME3_SPORT_BUTTON_STATUS sportButtonStatus();
 };
 
 // DME4 : 0x545
