@@ -35,57 +35,57 @@ class MS43_DME1_Frame {
     // LV_SWI_IGK:
     // false - terminal 15 off detected
     // true  - terminal 15 on detected
-    bool ignitionKeyVoltageIsOn();
+    bool ignitionKeyVoltageIsOn() const;
 
     // LV_F_N_ENG:
     // false - no CRK error present
     // true  - CRK error present
-    bool crankshaftSensorHasError();
+    bool crankshaftSensorHasError() const;
 
     // LV_ACK_TCS:
     // false - either ASC1 was not received within the last 500 ms or it
     //         contains a plausibility error
     // true  - the ASC message ASC1 was received within the last 500 ms and
     //         contains no plausibility errors of the requirements TQI_ASR_CAN / TQI_MSR_CA
-    bool tractionControlHasError();
+    bool tractionControlHasError() const;
 
     // LV_ERR_GC:
     // false - gear change not or partly possible
     // true  - gear change possible
-    bool gearChangeIsPossible();
+    bool gearChangeIsPossible() const;
 
     // SF_TQD: Charge Intervention State
     // See enum values for reference
-    MS43_DME1_CHARGE_INTRV_STATE chargeIntrvState();
+    MS43_DME1_CHARGE_INTRV_STATE chargeIntrvState() const;
 
     // LV_F_SUB_TQI:
     // false - MAF ok
     // true  - MAF error present
-    bool mafHasError();
+    bool mafHasError() const;
 
     // TQI_TQR_CAN:
     // Indexed Engine Torque in % of C_TQ_STND (including ASR/MSR/ETCU/LIM/AMT/GEAR intervention)
-    double indexedTorquePercent();
+    float indexedTorquePercent() const;
 
     // N_ENG:
     // Engine Speed in rpm
-    int engineSpeedRPM();
+    int engineSpeedRPM() const;
 
     // TQI_CAN:
     // Indicated Engine Torque in % of C_TQ_STND (based on PVS, N, AMP, TIA ,TCO, IGA, PUC so ip_tqi_pvs__n__pvs)
-    double indicatedTorquePercent();
+    float indicatedTorquePercent() const;
 
     // TQ_LOSS_CAN:
     // Engine Torque Loss (due to engine friction, AC compressor and electrical power consumption) in % of C_TQ_STND
-    double lossTorquePercent();
+    float lossTorquePercent() const;
 
     // ERR_AMT_CAN:
     // Automatic Manual Transmission has error
-    bool amtHasError();
+    bool amtHasError() const;
 
     // TQI_MAF_CAN:
     // Theorethical Engine Torque in % of C_TQ_STND after charge intervention (based on MAF & IGA so ip_tqi_maf__n__maf)
-    double theorethicalTorquePercent();
+    float theorethicalTorquePercent() const;
 };
 
 typedef enum MS43_DME2_STEERING_WHEEL_CRUISE_STATE {
@@ -150,15 +150,15 @@ class MS43_DME2_Frame {
 
     // TEMP_ENG:
     // Engine (Coolant) Temperature in °C
-    // min:      -47.623°C
-    // init/max: 142.877°C
-    double engineTempC();
+    // min:      -47°C
+    // init/max: 142°C
+    int engineTempC() const;
 
     // TEMP_ENG:
     // Engine (Coolant) Temperature in °F
-    // min:      -53.7214°F
-    // init/max: 289.179°F
-    double engineTempF();
+    // min:      -53°F
+    // init/max: 289°F
+    int engineTempF() const;
 
     // AMP_CAN:
     // Ambient Pressure in hPa
@@ -166,74 +166,74 @@ class MS43_DME2_Frame {
     // min:    600hPa
     // max:    1106hPa
     // Error:  -1
-    int ambientPressure();
+    int ambientPressure() const;
 
     // LV_SWI_CLU:
     // Clutch Switch State
     // false - released
     // true  - depressed
-    bool clutchIsPressed();
+    bool clutchIsPressed() const;
 
     // LV_LEVEL_IS:
     // Idle Regulator State
     // false - idle above threshold
     // true  - idle below threshold
-    bool idleRegulatorOn();
+    bool idleRegulatorOn() const;
 
     // LV_ACK_CRU_AD_ECU:
     // Acknowledge of ACC1 CAN Message
     // false - no ACK
     // true  - ACK
-    bool ackFromACC1();
+    bool ackFromACC1() const;
 
     // LV_ERU_CAN:
     // Engine Running State
     // false - engine stopped
     // true  - engine running
-    bool engineIsRunning();
+    bool engineIsRunning() const;
 
     // STATE_MSW_CAN: Steering wheel cruise control buttons
     // See enum values for reference
-    MS43_DME2_STEERING_WHEEL_CRUISE_STATE steeringWheelCruiseState();
+    MS43_DME2_STEERING_WHEEL_CRUISE_STATE steeringWheelCruiseState() const;
 
     // TPS_VIRT_CRU_CAN:
     // Virtual cruise control pedal percentage
-    double virtualCruisePedalPercent();
+    float virtualCruisePedalPercent() const;
 
     // TPS_CAN:
     // Accelerator Pedal Position in % of PVS_MAX
     // init/min: 0%
     // max:    : 99.2%
     // error   : -1
-    double acceleratorPedalPercent();
+    float acceleratorPedalPercent() const;
 
     // LV_BS:
     // Brake Switch State
     // false - brake not actuated
     // true  - brake actuated
-    bool brakeSwitchActive();
+    bool brakeSwitchActive() const;
 
     // LV_ERR_BS:
     // Brake Switch System State
     // false - brake switch system OK
     // true  - brake switch system faulty
-    bool brakeSwitchHasError();
+    bool brakeSwitchHasError() const;
 
     // LV_KD_CAN:
     // Kick Down State
     // 0 = kick down not active
     // 1 = kick down active
-    bool kickdownIsActive();
+    bool kickdownIsActive() const;
 
     // STATE_CRU_CAN: Cruise Control state
     // See enum values for reference
-    MS43_DME2_CRUISE_STATE cruiseControlState();
+    MS43_DME2_CRUISE_STATE cruiseControlState() const;
 
     // REQ_SHIFTLOCK:
     // Request for shiftlock to engage
     // false - no actuation is active
     // true  - actuation ISA, MTC or N_SP_IS is active
-    bool shiftLockRequested();
+    bool shiftLockRequested() const;
 
 };
 
@@ -268,7 +268,7 @@ class MS43_DME3_Frame {
     // STATE_SOF_CAN:
     // Sport Button Status
     // init : off
-    MS43_DME3_SPORT_BUTTON_STATUS sportButtonStatus();
+    MS43_DME3_SPORT_BUTTON_STATUS sportButtonStatus() const;
 };
 
 // DME4 : 0x545
@@ -282,6 +282,107 @@ class MS43_DME4_Frame {
 
     // Create a MS43_DME2_Frame view from frame
     MS43_DME4_Frame(uint8_t (&f)[8]);
+
+    // LV_MIL:
+    // Check Engine Light
+    // false - OFF
+    // true  - ON
+    //
+    // SES/CEL/MIL are the same name of what is "officially" the
+    // Malfunction Indicator Light that can light when there is an OBDII
+    // fault that impacts the engine fuel management system and can cause
+    // increase exhaust emissions.
+    bool checkEngineLightOn() const;
+
+    // LV_MAIN_SWI_CRU - CRU_MAIN_SWI:
+    // Cruise Control Light
+    // false - OFF
+    // true  - ON
+    bool cruiseControlLightOn() const;
+
+    // LV_ETC_DIAG:
+    // EML Light
+    // false - OFF
+    // true  - ON
+    //
+    // The EML is for the electronic drive by wire throttle control.
+    // It may or may not come on with the addition of ABS and/or DSC
+    // and/or SES/CEL/MIL lights. The Electronic Throttle control system
+    // is a pretty complex system and often can and will work with other
+    // systems on the car.
+    bool emlLightOn() const;
+
+    // LV_FUC_CAN:
+    // Fuel Tank Cap Light
+    // false - OFF
+    // true  - ON
+    bool fuelTankCapLight() const;
+
+    // FCO:
+    // Fuel consumiption counter
+    // Values just cycle from 0 to FFFF then start over at zero.
+    // Fuel consumiption is the rate of change.
+    u_int16_t fuelConsumptionCounter() const;
+
+    // Oil Level Error LED M5 Cluster
+    // Not sure why there's two...
+    // false - OFF
+    // true  - ON
+    bool oilLevelErrorLightOnM5One() const;
+
+    // Oil Level Warning LED Every Other Cluster
+    // false - OFF
+    // true  - ON
+    bool oilLevelErrorLightOn() const;
+
+    // Oil Level Error LED M5 Cluster
+    // Not sure why there's two...
+    // false - OFF
+    // true  - ON
+    bool oilLevelErrorLightOnM5Two() const;
+
+    // LV_TEMP_ENG - Coolant Overheating Light
+    // false - OFF
+    // true  - ON
+    bool coolantOverheatingLightOn() const;
+
+    // M3 warm up light, temp high
+    // 7K and up RPM lights
+    // false - OFF
+    // true  - ON
+    bool warmUpHighLightOn() const;
+
+    // M3 warm up light, temp medium
+    // 6.5K and up RPM lights
+    // false - OFF
+    // true  - ON
+    bool warmUpMediumLightOn() const;
+
+    // M3 warm up light, temp low
+    // 5.5K and up RPM lights
+    // false - OFF
+    // true  - ON
+    bool warmUpLowLightOn() const;
+
+    // TOIL_CAN:
+    // Oil Temperature in °C
+    // min: -48°C
+    // max: 206°C
+    int oilTempC() const;
+
+    // TOIL_CAN:
+    // Oil Temperature in °F
+    // min: -54°F
+    // max: 402°F
+    int oilTempF() const;
+
+    // Battery Chargelight (Alpina Roadster Only)
+    bool batteryChargeLightOn() const;
+
+    // Oil Level (MSS54HP only)
+    // min: -3.0L
+    // max: +3.2L
+    float oilLevelLiters() const;
 
 };
 

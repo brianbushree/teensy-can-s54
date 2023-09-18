@@ -2,66 +2,70 @@
 
 MS43_DME1_Frame::MS43_DME1_Frame(uint8_t (&f)[8]) : frame(f) {};
 
-bool MS43_DME1_Frame::ignitionKeyVoltageIsOn() {
+bool MS43_DME1_Frame::ignitionKeyVoltageIsOn() const {
   return frame[0] & 0b00000001;
 }
 
-bool MS43_DME1_Frame::crankshaftSensorHasError() {
+bool MS43_DME1_Frame::crankshaftSensorHasError() const {
   return frame[0] & 0b00000010;
 }
 
-bool MS43_DME1_Frame::tractionControlHasError() {
+bool MS43_DME1_Frame::tractionControlHasError() const {
   return frame[0] & 0b00000100;
 }
 
-bool MS43_DME1_Frame::gearChangeIsPossible() {
+bool MS43_DME1_Frame::gearChangeIsPossible() const {
   return frame[0] & 0b00001000;
 }
 
-MS43_DME1_CHARGE_INTRV_STATE MS43_DME1_Frame::chargeIntrvState() {
+MS43_DME1_CHARGE_INTRV_STATE MS43_DME1_Frame::chargeIntrvState() const {
   return static_cast<MS43_DME1_CHARGE_INTRV_STATE>((frame[0] & 0b00110000) >> 4);
 }
 
-bool MS43_DME1_Frame::mafHasError() {
+bool MS43_DME1_Frame::mafHasError() const {
   return frame[0] & 0b10000000;
 }
 
-double MS43_DME1_Frame::indexedTorquePercent() {
+float MS43_DME1_Frame::indexedTorquePercent() const {
   return frame[1] * 0.39;
 }
 
-int MS43_DME1_Frame::engineSpeedRPM() {
+int MS43_DME1_Frame::engineSpeedRPM() const {
   return ((frame[3] * 256) + frame[2]) * 0.15625;
 }
 
-double MS43_DME1_Frame::indicatedTorquePercent() {
+float MS43_DME1_Frame::indicatedTorquePercent() const {
   return frame[4] * 0.39;
 }
 
-double MS43_DME1_Frame::lossTorquePercent() {
+float MS43_DME1_Frame::lossTorquePercent() const {
   return frame[5] * 0.39;
 }
 
-bool MS43_DME1_Frame::amtHasError() {
+bool MS43_DME1_Frame::amtHasError() const {
   return frame[6] & 0b00000011;
 }
 
-double MS43_DME1_Frame::theorethicalTorquePercent() {
+float MS43_DME1_Frame::theorethicalTorquePercent() const {
   return frame[7] * 0.39;
+}
+
+float celciusToFahrenheit(float celcius) {
+    return (celcius * 1.8) + 32;
 }
 
 
 MS43_DME2_Frame::MS43_DME2_Frame(uint8_t (&f)[8]) : frame(f) {};
 
-double MS43_DME2_Frame::engineTempC() {
+int MS43_DME2_Frame::engineTempC() const {
   return (frame[1] * .75) - 48.373;
 }
 
-double MS43_DME2_Frame::engineTempF() {
-  return (engineTempC() * 1.8) + 32;
+int MS43_DME2_Frame::engineTempF() const {
+  return celciusToFahrenheit(engineTempC());
 }
 
-int MS43_DME2_Frame::ambientPressure() {
+int MS43_DME2_Frame::ambientPressure() const {
   if (frame[2] == 0x00) {
     return 0;
   } else if (frame[2] == 0xFF) {
@@ -71,28 +75,28 @@ int MS43_DME2_Frame::ambientPressure() {
   }
 }
 
-bool MS43_DME2_Frame::clutchIsPressed() {
+bool MS43_DME2_Frame::clutchIsPressed() const {
   return frame[3] & 0b00000001;
 }
 
-bool MS43_DME2_Frame::idleRegulatorOn() {
+bool MS43_DME2_Frame::idleRegulatorOn() const {
   return frame[3] & 0b00000010;
 }
 
-bool MS43_DME2_Frame::ackFromACC1() {
+bool MS43_DME2_Frame::ackFromACC1() const {
   return frame[3] & 0b00000100;
 }
 
-bool MS43_DME2_Frame::engineIsRunning() {
+bool MS43_DME2_Frame::engineIsRunning() const {
   return frame[3] & 0b00001000;
 }
 
-MS43_DME2_STEERING_WHEEL_CRUISE_STATE MS43_DME2_Frame::steeringWheelCruiseState() {
+MS43_DME2_STEERING_WHEEL_CRUISE_STATE MS43_DME2_Frame::steeringWheelCruiseState() const {
   return static_cast<MS43_DME2_STEERING_WHEEL_CRUISE_STATE>((frame[3] & 0b11100000) >> 5);
 }
 
 // Helper function for pedal values
-double pedalValueToPercent(uint8_t val) {
+float pedalValueToPercent(uint8_t val) {
   // init and zero values
   if (val == 0x00 || val == 0x01) {
     return 0;
@@ -103,38 +107,102 @@ double pedalValueToPercent(uint8_t val) {
   }
 }
 
-double MS43_DME2_Frame::virtualCruisePedalPercent() {
+float MS43_DME2_Frame::virtualCruisePedalPercent() const {
   return pedalValueToPercent(frame[4]);
 }
 
-double MS43_DME2_Frame::acceleratorPedalPercent() {
+float MS43_DME2_Frame::acceleratorPedalPercent() const {
   return pedalValueToPercent(frame[5]);
 }
 
-bool MS43_DME2_Frame::brakeSwitchActive() {
+bool MS43_DME2_Frame::brakeSwitchActive() const {
   return frame[6] & 0b00000001;
 }
 
-bool MS43_DME2_Frame::brakeSwitchHasError() {
+bool MS43_DME2_Frame::brakeSwitchHasError() const {
   return frame[6] & 0b00000010;
 }
 
-bool MS43_DME2_Frame::kickdownIsActive() {
+bool MS43_DME2_Frame::kickdownIsActive() const {
   return frame[6] & 0b00000100;
 }
 
-MS43_DME2_CRUISE_STATE MS43_DME2_Frame::cruiseControlState() {
+MS43_DME2_CRUISE_STATE MS43_DME2_Frame::cruiseControlState() const {
   return static_cast<MS43_DME2_CRUISE_STATE>((frame[6] & 0b00111000) >> 3);
 }
 
-bool MS43_DME2_Frame::shiftLockRequested() {
+bool MS43_DME2_Frame::shiftLockRequested() const {
   return frame[6] & 0b11000000;
 }
 
 MS43_DME3_Frame::MS43_DME3_Frame(uint8_t (&f)[8]) : frame(f) {};
 
-MS43_DME3_SPORT_BUTTON_STATUS MS43_DME3_Frame::sportButtonStatus() {
+MS43_DME3_SPORT_BUTTON_STATUS MS43_DME3_Frame::sportButtonStatus() const {
   return static_cast<MS43_DME3_SPORT_BUTTON_STATUS>(frame[2]);
 }
 
 MS43_DME4_Frame::MS43_DME4_Frame(uint8_t (&f)[8]) : frame(f) {};
+
+bool MS43_DME4_Frame::checkEngineLightOn() const {
+  return frame[0] & 0b00000010;
+}
+
+bool MS43_DME4_Frame::cruiseControlLightOn() const {
+  return frame[0] & 0b00001000;
+}
+
+bool MS43_DME4_Frame::emlLightOn() const {
+  return frame[0] & 0b00010000;
+}
+
+bool MS43_DME4_Frame::fuelTankCapLight() const {
+  return frame[0] & 0b01000000;
+}
+
+u_int16_t MS43_DME4_Frame::fuelConsumptionCounter() const {
+  return ((uint16_t)frame[2] << 8) | frame[1];
+}
+
+bool MS43_DME4_Frame::oilLevelErrorLightOnM5One() const {
+  return frame[3] & 0b00000001;
+}
+
+bool MS43_DME4_Frame::oilLevelErrorLightOn() const {
+  return frame[3] & 0b00000010;
+}
+
+bool MS43_DME4_Frame::oilLevelErrorLightOnM5Two() const {
+  return frame[3] & 0b00000100;
+}
+
+bool MS43_DME4_Frame::coolantOverheatingLightOn() const {
+  return frame[3] & 0b00001000;
+}
+
+bool MS43_DME4_Frame::warmUpHighLightOn() const {
+  return frame[3] & 0b00010000;
+}
+
+bool MS43_DME4_Frame::warmUpMediumLightOn() const {
+  return frame[3] & 0b00100000;
+}
+
+bool MS43_DME4_Frame::warmUpLowLightOn() const {
+  return frame[3] & 0b01000000;
+}
+
+int MS43_DME4_Frame::oilTempC() const {
+  return frame[4] - 48;
+}
+
+int MS43_DME4_Frame::oilTempF() const {
+  return celciusToFahrenheit(oilTempC());
+}
+
+bool MS43_DME4_Frame::batteryChargeLightOn() const {
+  return frame[5] & 0b00000001;
+}
+
+float MS43_DME4_Frame::oilLevelLiters() const {
+  return ((double)frame[6] - 158) / 10;
+}
