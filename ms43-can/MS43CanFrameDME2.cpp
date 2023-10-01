@@ -1,6 +1,6 @@
 #include "MS43Can.h"
 
-MS43_DME2_Frame::MS43_DME2_Frame(uint8_t (&f)[8]) : frame(f) {};
+MS43_DME2_Frame::MS43_DME2_Frame(uint8_t (&f)[8]) : MS43_Frame_Base(f) {};
 
 int MS43_DME2_Frame::engineTempC() const {
   return (frame[1] * .75) - 48.373;
