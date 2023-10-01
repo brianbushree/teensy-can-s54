@@ -2,6 +2,13 @@
 #define MS43Can_H
 #include <stdint.h>
 
+// Frame base class for helpers
+class MS43_Frame_Base {
+  protected:
+    float celciusToFahrenheit(float celcius) const;
+    float pedalValueToPercent(uint8_t val) const;
+};
+
 typedef enum MS43_DME1_CHARGE_INTRV_STATE {
   // the required intervention can be performed completely
   // or if there is no ASC requirement
@@ -22,7 +29,7 @@ typedef enum MS43_DME1_CHARGE_INTRV_STATE {
 
 // DME1 : 0x316
 // Refresh Rate: 10ms
-class MS43_DME1_Frame {
+class MS43_DME1_Frame : private MS43_Frame_Base {
 
   private:
     uint8_t (&frame)[8];
@@ -138,7 +145,7 @@ typedef enum MS43_DME2_CRUISE_STATE {
 
 // DME2 : 0x329
 // Refresh Rate: 10ms
-class MS43_DME2_Frame {
+class MS43_DME2_Frame : private MS43_Frame_Base {
 
   private:
     uint8_t (&frame)[8];
@@ -255,7 +262,7 @@ typedef enum MS43_DME3_SPORT_BUTTON_STATUS {
 
 // DME3 : 0x338
 // Refresh Rate: 1000ms and at signal change
-class MS43_DME3_Frame {
+class MS43_DME3_Frame : private MS43_Frame_Base {
 
   private:
     uint8_t (&frame)[8];
@@ -273,7 +280,7 @@ class MS43_DME3_Frame {
 
 // DME4 : 0x545
 // Refresh Rate: 10ms
-class MS43_DME4_Frame {
+class MS43_DME4_Frame : private MS43_Frame_Base {
 
   private:
     uint8_t (&frame)[8];

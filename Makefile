@@ -5,10 +5,14 @@ CPPFLAGS=
 LDFLAGS=
 LDLIBS=
 
+ms43CanHead=$(wildcard ./ms43-can/*.h)
+ms43CanImpl=$(wildcard ./ms43-can/*.cpp)
+sampleDataTestImpl=$(wildcard ./sample-data-test/*.cpp)
+
 build: bin/sampleDataTest
 
-bin/sampleDataTest: ./sample-data-test/sampleDataTest.cpp ./ms43-can/MS43Can.cpp ./ms43-can/MS43Can.h
-	$(CXX) $(LDFLAGS) -o bin/sampleDataTest ./sample-data-test/sampleDataTest.cpp ./ms43-can/MS43Can.cpp $(LDLIBS)
+bin/sampleDataTest: $(sampleDataTestImpl) $(ms43CanHead) $(ms43CanImpl)
+	$(CXX) $(LDFLAGS) -o bin/sampleDataTest $(sampleDataTestImpl) $(ms43CanImpl) $(LDLIBS)
 
 clean:
 	$(RM) bin/sampleDataTest
