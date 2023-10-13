@@ -381,6 +381,15 @@ class MS43_DME4_Frame : private MS43_Frame_Base {
     // max: +3.2L
     float oilLevelLiters() const;
 
+    // Tire pressure (MSS54HP only)
+    // false - normal (confirm this?)
+    // true  - low pressure (confirm this?)
+    bool tirePressureState() const {
+
+    // Engine Oil Pressure Low
+    // false - normal
+    // true  - low pressure
+    bool engineOilPressureLow() const;
 };
 
 #endif

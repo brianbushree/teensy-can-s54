@@ -3,7 +3,6 @@
  */
 
 #include <FlexCAN_T4.h>
-#include <Nextion.h>
 #include "../ms43-can/MS43Can.h"
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
