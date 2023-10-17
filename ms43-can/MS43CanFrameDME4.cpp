@@ -66,7 +66,7 @@ float MS43_DME4_Frame::oilLevelLiters() const {
   return ((double)frame[6] - 158) / 10;
 }
 
-bool MS43_DME4_Frame::tirePressure() const {
+bool MS43_DME4_Frame::tirePressureState() const {
   return frame[7] & 0b00000001;
 }
 

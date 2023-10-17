@@ -384,7 +384,7 @@ class MS43_DME4_Frame : private MS43_Frame_Base {
     // Tire pressure (MSS54HP only)
     // false - normal (confirm this?)
     // true  - low pressure (confirm this?)
-    bool tirePressureState() const {
+    bool tirePressureState() const;
 
     // Engine Oil Pressure Low
     // false - normal

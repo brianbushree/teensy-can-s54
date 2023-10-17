@@ -63,6 +63,8 @@ void printDME4(std::ostream &os, const MS43_DME4_Frame &dme4) {
   os << " oilTempF: " << dme4.oilTempF() << "\n";
   os << " batteryChargeLightOn: " << dme4.batteryChargeLightOn() << "\n";
   os << " oilLevelLiters: " << dme4.oilLevelLiters() << "\n";
+  os << " tirePressureState: " << dme4.tirePressureState() << "\n";
+  os << " engineOilPressureLow: " << dme4.engineOilPressureLow() << "\n";
   os << "}" << "\n";
 }
 
