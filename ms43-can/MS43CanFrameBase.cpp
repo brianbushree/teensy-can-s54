@@ -1,14 +1,14 @@
 #include "MS43Can.h"
 
-MS43_Frame_Base::MS43_Frame_Base(uint8_t (&f)[8]) : frame(f) {};
+MS43_Frame_Receive_Base::MS43_Frame_Receive_Base(uint8_t (&f)[8]) : frame(f) {};
 
 // Helper function for temp conversion
-float MS43_Frame_Base::celciusToFahrenheit(float celcius) const {
+float MS43_Frame_Receive_Base::celciusToFahrenheit(float celcius) const {
   return (celcius * 1.8) + 32;
 }
 
 // Helper function for pedal values
-float MS43_Frame_Base::pedalValueToPercent(uint8_t val) const {
+float MS43_Frame_Receive_Base::pedalValueToPercent(uint8_t val) const {
   // init and zero values
   if (val == 0x00 || val == 0x01) {
     return 0;
@@ -18,3 +18,7 @@ float MS43_Frame_Base::pedalValueToPercent(uint8_t val) const {
     return val * 0.390625;
   }
 }
+
+// Init the send frames with zero values
+MS43_Frame_Send_Base::MS43_Frame_Send_Base() :
+ frame{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} {}

@@ -1,7 +1,6 @@
-CC=gcc
 CXX=g++
 RM=rm -f
-CPPFLAGS=
+CPPFLAGS=-std=c++14 # Teensy supports c++14
 LDFLAGS=
 LDLIBS=
 
@@ -12,7 +11,10 @@ sampleDataTestImpl=$(wildcard ./sample-data-test/*.cpp)
 build: bin/sampleDataTest
 
 bin/sampleDataTest: $(sampleDataTestImpl) $(ms43CanHead) $(ms43CanImpl)
-	$(CXX) $(LDFLAGS) -o bin/sampleDataTest $(sampleDataTestImpl) $(ms43CanImpl) $(LDLIBS)
+	$(CXX) $(CPPFLAGS) $(LDFLAGS) -o bin/sampleDataTest $(sampleDataTestImpl) $(ms43CanImpl) $(LDLIBS)
+
+test: build
+	bin/sampleDataTest
 
 clean:
 	$(RM) bin/sampleDataTest
