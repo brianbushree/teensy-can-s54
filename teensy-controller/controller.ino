@@ -18,7 +18,6 @@ const uint8_t  CAN_MAX_MAILBOXES  = 16;     // A mailbox represents an input or 
 
 // Nextion components:
 //   (page_id, component_id, global_name)
-NexGauge textDisplayTemp = NexGauge(0, 1, "temp");
 
 void setup(void) {
   // init CAN

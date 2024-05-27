@@ -6,15 +6,23 @@ LDLIBS=
 
 ms43CanHead=$(wildcard ./ms43-can/*.h)
 ms43CanImpl=$(wildcard ./ms43-can/*.cpp)
-sampleDataTestImpl=$(wildcard ./sample-data-test/*.cpp)
+ms43CanTestImpl=$(wildcard ./ms43-can-test/*.cpp)
 
-build: bin/sampleDataTest
+nextionHead=$(wildcard ./nextion/*.h)
+nextionImpl=$(wildcard ./nextion/*.cpp)
+nextionTestImpl=$(wildcard ./nextion-test/*.cpp)
 
-bin/sampleDataTest: $(sampleDataTestImpl) $(ms43CanHead) $(ms43CanImpl)
-	$(CXX) $(CPPFLAGS) $(LDFLAGS) -o bin/sampleDataTest $(sampleDataTestImpl) $(ms43CanImpl) $(LDLIBS)
+build: bin/ms43CanTest bin/nextionTest
+
+bin/ms43CanTest: $(ms43CanTestImpl) $(ms43CanHead) $(ms43CanImpl)
+	$(CXX) $(CPPFLAGS) $(LDFLAGS) -o bin/ms43CanTest $(ms43CanTestImpl) $(ms43CanImpl) $(LDLIBS)
+
+bin/nextionTest: $(nextionTestImpl) $(nextionHead) $(nextionImpl)
+	$(CXX) $(CPPFLAGS) $(LDFLAGS) -o bin/nextionTest $(nextionTestImpl) $(nextionImpl) $(LDLIBS)
 
 test: build
-	bin/sampleDataTest
+	bin/ms43CanTest
+	bin/nextionTest
 
 clean:
-	$(RM) bin/sampleDataTest
+	$(RM) bin/ms43CanTest bin/nextionTest
