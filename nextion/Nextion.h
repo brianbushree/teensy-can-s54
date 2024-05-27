@@ -11,8 +11,6 @@ typedef struct {
 typedef struct {
   NextionVariable* variables;
   uint8_t variablesLength;
-
-  uint8_t pageId;
 } NextionPage;
 
 typedef struct {

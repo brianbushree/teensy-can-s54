@@ -4,6 +4,7 @@
 
 #include <FlexCAN_T4.h>
 #include "../ms43-can/MS43Can.h"
+#include "../nextion/Nextion.h"
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
 
@@ -16,10 +17,22 @@ const uint8_t  CAN_MAX_MAILBOXES  = 16;     // A mailbox represents an input or 
 //   MB2 == 0x338 DME3 Engine Control Unit
 //   MB3 == 0x545 DME4 Engine Control Unit
 
-// Nextion components:
-//   (page_id, component_id, global_name)
+// Nextion Page State
+// stateful page variable (0 indexed, default to zero on startup)
+// indicates what page user is on and what values to send
+uint8_t VAL_CURR_NEXTION_PAGE = 0;
 
-void setup(void) {
+// Nextion State struct
+// contains all Nextion pages, keys, & pointers to values
+NextionState NEXTION_STATE;
+
+// Check Engine Light (CEL) State
+// val: 't' for ON, 'f' for OFF
+const char NEXTION_KEY_CEL_IS_ON[8] = "CELIsOn"; // declare one extra char
+const uint8_t DEFAULT_VAL_CEL_IS_ON = (uint8_t) 'f';
+uint8_t valCelIsOn = DEFAULT_VAL_CEL_IS_ON;
+
+void initCanBus(void) {
   // init CAN
   Can.begin();
   Can.setBaudRate(CAN_BIT_RATE);
@@ -46,6 +59,28 @@ void setup(void) {
   filterReceiveMailbox(MB3, dme4Receive, 0x545);
 
   Can.mailboxStatus();
+}
+
+void initNextionState(void) {
+  NextionVariable pageOneVars[] = {
+    {
+      (char*)&NEXTION_KEY_CEL_IS_ON, &valCelIsOn
+    }
+  };
+  NextionPage pages[] = {
+    { // Page 1 == ???? TODO
+      pageOneVars, (sizeof(pageOneVars)/sizeof(*pageOneVars)),
+    }
+  };
+
+  NEXTION_STATE = NextionState{
+    pages, (sizeof(pages)/sizeof(*pages))
+  };
+}
+
+void setup(void) {
+  initCanBus();
+  initNextionState()
 }
 
 void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
@@ -85,6 +120,41 @@ void dme4Receive(const CAN_message_t &msg) {
   // TODO: do something with this
 }
 
+// Send all Nextion values for a given page
+void sendValuesToNextion(const uint8_t page) {
+  for (int var= 0; var < state.pages[page].variablesLength; var++) {
+    // send variable as "KEY=V"
+    NextionVariable variable = state.pages[page].variables[var];
+    nextionSerial.print(variable.key);
+    nextionSerial.print('='); // printf?
+    nextionSerial.print(*variable.value); // TODO: should this be write()?
+
+    // use three 0xff to deliminate input
+    nextionSerial.write(0xff);
+    nextionSerial.write(0xff);
+    nextionSerial.write(0xff);
+  }
+}
+
 void loop() {
+  //
+  // RECEIVE EVENTS
+  // --------------------------------------------------------------------------
+
+  // receive values coming in from CAN bus & update local state
   Can.events()
+
+  // receive values from Nextion & update local state
+  // TODO
+
+  //
+  // EMIT EVENTS
+  // --------------------------------------------------------------------------
+
+  // emit all values necessary for CAN bus
+  // TODO
+
+  // emit all values for current page to Nextion
+  sendValuesToNextion(VAL_CURR_NEXTION_PAGE);
+
 }

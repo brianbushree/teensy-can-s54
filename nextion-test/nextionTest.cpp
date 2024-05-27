@@ -7,17 +7,40 @@ int main(int argc, char const *argv[]) {
   char keyOne[5] = "test"; // declare one extra char
   uint8_t valueOne = (uint8_t) 'f';
 
-  NextionVariable variables[1] = {
-    NextionVariable{
+  char keyTwo[5] = "blah"; // declare one extra char
+  uint8_t valueTwo = (uint8_t) 0x01;
+
+  char keyThree[4] = "foo"; // declare one extra char
+  uint8_t valueThree = (uint8_t) 0;
+
+  char keyFour[4] = "bar"; // declare one extra char
+  uint8_t valueFour = (uint8_t) 420;
+
+  NextionVariable variables[] = {
+    {
       (char*)&keyOne, &valueOne
+    },
+    {
+      (char*)&keyTwo, &valueTwo
     }
   };
-  NextionPage pages[1] = {
-    NextionPage{
-      variables,
-      (sizeof(variables)/sizeof(*variables)),
-      0
+
+  NextionVariable variablesTwo[] = {
+    {
+      (char*)&keyThree, &valueThree
+    },
+    {
+      (char*)&keyFour, &valueFour
     }
+  };
+
+  NextionPage pages[] = {
+    {
+      variables, (sizeof(variables)/sizeof(*variables))
+    },
+    {
+      variablesTwo, (sizeof(variablesTwo)/sizeof(*variablesTwo))
+    },
   };
 
   NextionState state = NextionState{
@@ -27,8 +50,8 @@ int main(int argc, char const *argv[]) {
 
   // print each page sequentially
   for (int page = 0; page < state.pagesLength; page++) {
-    std::cout << "page " << page << " {" << std::endl;
-    for (int var; var < state.pages[page].variablesLength; var++) {
+    std::cout << "page " << static_cast<int>(page) << " {" << std::endl;
+    for (int var = 0; var < state.pages[page].variablesLength; var++) {
 
       // print variable
       NextionVariable variable = state.pages[page].variables[var];
