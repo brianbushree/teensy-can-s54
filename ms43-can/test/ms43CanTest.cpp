@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <iostream>
-#include "../ms43-can/MS43Can.h"
+#include "../MS43Can.h"
 
 void printDME1(std::ostream &os, const MS43_DME1_Frame &dme1) {
   os << "MS43_DME1_Frame{" << "\n";

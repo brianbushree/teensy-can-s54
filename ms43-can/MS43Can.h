@@ -5,8 +5,8 @@
 // Received frame base class
 class MS43_Frame_Receive_Base {
   protected:
-    uint8_t (&frame)[8];
-    MS43_Frame_Receive_Base(uint8_t (&f)[8]);
+    const uint8_t (&frame)[8];
+    MS43_Frame_Receive_Base(const uint8_t (&f)[8]);
     float celciusToFahrenheit(float celcius) const;
     float pedalValueToPercent(uint8_t val) const;
 };
@@ -46,7 +46,7 @@ class MS43_DME1_Frame : private MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME1_Frame view from frame
-    MS43_DME1_Frame(uint8_t (&f)[8]);
+    MS43_DME1_Frame(const uint8_t (&f)[8]);
 
     // LV_SWI_IGK:
     // false - terminal 15 off detected
@@ -159,7 +159,7 @@ class MS43_DME2_Frame : private MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME2_Frame(uint8_t (&f)[8]);
+    MS43_DME2_Frame(const uint8_t (&f)[8]);
 
     // TEMP_ENG:
     // Engine (Coolant) Temperature in °C
@@ -273,7 +273,7 @@ class MS43_DME3_Frame : private MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME3_Frame(uint8_t (&f)[8]);
+    MS43_DME3_Frame(const uint8_t (&f)[8]);
 
     // STATE_SOF_CAN:
     // Sport Button Status
@@ -288,7 +288,7 @@ class MS43_DME4_Frame : private MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME4_Frame(uint8_t (&f)[8]);
+    MS43_DME4_Frame(const uint8_t (&f)[8]);
 
     // LV_MIL:
     // Check Engine Light
@@ -329,7 +329,7 @@ class MS43_DME4_Frame : private MS43_Frame_Receive_Base {
     // Fuel consumiption counter
     // Values just cycle from 0 to FFFF then start over at zero.
     // Fuel consumiption is the rate of change.
-    u_int16_t fuelConsumptionCounter() const;
+    uint16_t fuelConsumptionCounter() const;
 
     // Oil Level Error LED M5 Cluster
     // Not sure why there's two...

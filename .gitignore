@@ -1,1 +1,3 @@
 bin/*
+teensy-controller/libraries
+teensy-controller/build

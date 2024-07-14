@@ -1,6 +1,6 @@
 #include "MS43Can.h"
 
-MS43_DME4_Frame::MS43_DME4_Frame(uint8_t (&f)[8]) : MS43_Frame_Receive_Base(f) {};
+MS43_DME4_Frame::MS43_DME4_Frame(const uint8_t (&f)[8]) : MS43_Frame_Receive_Base(f) {};
 
 bool MS43_DME4_Frame::checkEngineLightOn() const {
   return frame[0] & 0b00000010;
@@ -18,7 +18,7 @@ bool MS43_DME4_Frame::fuelTankCapLight() const {
   return frame[0] & 0b01000000;
 }
 
-u_int16_t MS43_DME4_Frame::fuelConsumptionCounter() const {
+uint16_t MS43_DME4_Frame::fuelConsumptionCounter() const {
   return ((uint16_t)frame[2] << 8) | frame[1];
 }
 

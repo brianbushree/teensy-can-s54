@@ -3,8 +3,10 @@
  */
 
 #include <FlexCAN_T4.h>
-#include "../ms43-can/MS43Can.h"
-#include "../nextion/Nextion.h"
+#include <MS43Can.h>
+#include <Nextion.h>
+
+#define nextionSerial Serial2
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
 
@@ -20,11 +22,11 @@ const uint8_t  CAN_MAX_MAILBOXES  = 16;     // A mailbox represents an input or 
 // Nextion Page State
 // stateful page variable (0 indexed, default to zero on startup)
 // indicates what page user is on and what values to send
-uint8_t VAL_CURR_NEXTION_PAGE = 0;
+uint8_t valCurrentNextionPage = 0;
 
 // Nextion State struct
 // contains all Nextion pages, keys, & pointers to values
-NextionState NEXTION_STATE;
+NextionState nextionState;
 
 // Check Engine Light (CEL) State
 // val: 't' for ON, 'f' for OFF
@@ -73,18 +75,19 @@ void initNextionState(void) {
     }
   };
 
-  NEXTION_STATE = NextionState{
+  nextionState = NextionState{
     pages, (sizeof(pages)/sizeof(*pages))
   };
 }
 
 void setup(void) {
-  initCanBus();
-  initNextionState()
+  // initCanBus();
+  // initNextionState();
+  Serial.begin(9600);
 }
 
 void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
-  Can.setMB(mb, RX, EXT)
+  Can.setMB(mb, RX, EXT);
 }
 
 void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
@@ -102,29 +105,33 @@ void filterReceiveMailbox(FLEXCAN_MAILBOX mb, _MB_ptr handler, uint32_t filter) 
 //   0D 00 84 27 00 0B 31 82
 void dme1Receive(const CAN_message_t &msg) {
   MS43_DME1_Frame value = MS43_DME1_Frame(msg.buf);
+  Serial.print(value.ignitionKeyVoltageIsOn());
   // TODO: do something with this
 }
 
 void dme2Receive(const CAN_message_t &msg) {
   MS43_DME2_Frame value = MS43_DME2_Frame(msg.buf);
+  Serial.print(value.engineIsRunning());
   // TODO: do something with this
 }
 
 void dme3Receive(const CAN_message_t &msg) {
   MS43_DME3_Frame value = MS43_DME3_Frame(msg.buf);
+  Serial.print(value.sportButtonStatus());
   // TODO: do something with this
 }
 
 void dme4Receive(const CAN_message_t &msg) {
   MS43_DME4_Frame value = MS43_DME4_Frame(msg.buf);
+  Serial.print(value.checkEngineLightOn());
   // TODO: do something with this
 }
 
 // Send all Nextion values for a given page
 void sendValuesToNextion(const uint8_t page) {
-  for (int var= 0; var < state.pages[page].variablesLength; var++) {
+  for (int var= 0; var < nextionState.pages[page].variablesLength; var++) {
     // send variable as "KEY=V"
-    NextionVariable variable = state.pages[page].variables[var];
+    NextionVariable variable = nextionState.pages[page].variables[var];
     nextionSerial.print(variable.key);
     nextionSerial.print('='); // printf?
     nextionSerial.print(*variable.value); // TODO: should this be write()?
@@ -141,8 +148,11 @@ void loop() {
   // RECEIVE EVENTS
   // --------------------------------------------------------------------------
 
+  Serial.println("foobar");
+  delay(1000);
+
   // receive values coming in from CAN bus & update local state
-  Can.events()
+  // Can.events();
 
   // receive values from Nextion & update local state
   // TODO
@@ -155,6 +165,6 @@ void loop() {
   // TODO
 
   // emit all values for current page to Nextion
-  sendValuesToNextion(VAL_CURR_NEXTION_PAGE);
+  // sendValuesToNextion(valCurrentNextionPage);
 
 }

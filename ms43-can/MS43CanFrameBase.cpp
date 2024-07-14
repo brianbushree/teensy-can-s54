@@ -1,6 +1,6 @@
 #include "MS43Can.h"
 
-MS43_Frame_Receive_Base::MS43_Frame_Receive_Base(uint8_t (&f)[8]) : frame(f) {};
+MS43_Frame_Receive_Base::MS43_Frame_Receive_Base(const uint8_t (&f)[8]) : frame(f) {};
 
 // Helper function for temp conversion
 float MS43_Frame_Receive_Base::celciusToFahrenheit(float celcius) const {

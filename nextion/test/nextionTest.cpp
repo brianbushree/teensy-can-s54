@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <iostream>
-#include "../nextion/Nextion.h"
+#include "../Nextion.h"
 
 int main(int argc, char const *argv[]) {
 
