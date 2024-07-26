@@ -2,35 +2,53 @@
 #include <iostream>
 #include "../Nextion.h"
 
+class TestValues {
+
+  public:
+  uint8_t valueOne() {
+    return (uint8_t) 'f';
+  }
+
+  uint8_t valueTwo() {
+    return (uint8_t) 0x01;
+  }
+
+  uint8_t valueThree() {
+    return (uint8_t) 0;
+  }
+
+  uint8_t valueFour() {
+    return (uint8_t) 420;
+  }
+};
+
+TestValues test = TestValues();
+
 int main(int argc, char const *argv[]) {
 
   char keyOne[5] = "test"; // declare one extra char
-  uint8_t valueOne = (uint8_t) 'f';
 
   char keyTwo[5] = "blah"; // declare one extra char
-  uint8_t valueTwo = (uint8_t) 0x01;
 
   char keyThree[4] = "foo"; // declare one extra char
-  uint8_t valueThree = (uint8_t) 0;
 
   char keyFour[4] = "bar"; // declare one extra char
-  uint8_t valueFour = (uint8_t) 420;
 
   NextionVariable variables[] = {
     {
-      (char*)&keyOne, &valueOne
+      (char*)&keyOne, [] { return test.valueOne(); },
     },
     {
-      (char*)&keyTwo, &valueTwo
+      (char*)&keyTwo, [] { return test.valueTwo(); },
     }
   };
 
   NextionVariable variablesTwo[] = {
     {
-      (char*)&keyThree, &valueThree
+      (char*)&keyThree, [] { return test.valueThree(); },
     },
     {
-      (char*)&keyFour, &valueFour
+      (char*)&keyFour, [] { return test.valueThree(); },
     }
   };
 
@@ -57,7 +75,7 @@ int main(int argc, char const *argv[]) {
       NextionVariable variable = state.pages[page].variables[var];
       std::cout << "\t[";
       std::cout << variable.key << ", ";
-      std::cout << std::hex << static_cast<int>(*variable.value) << ", ";
+      std::cout << std::hex << static_cast<int>(variable.value()) << ", ";
 
       // use three 0xff to deliminate input
       std::cout << 0xff << ", ";

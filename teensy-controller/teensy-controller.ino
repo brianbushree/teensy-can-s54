@@ -8,31 +8,67 @@
 
 #define nextionSerial Serial2
 
+// Use these to disable/enable units when unplugged
+const bool CAN_ENABLE       = false;
+const bool NEXTION_ENABLE   = true;
+const bool USB_DEBUG_ENABLE = true;
+
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
 
 const uint32_t CAN_BIT_RATE       = 500000; // E46 bitrate is 500kb/s
 const uint8_t  CAN_MAX_MAILBOXES  = 16;     // A mailbox represents an input or output data stream, for Teensy 4.0 max is 64
 
-// CAN mailboxes:
-//   MB0 == 0x316 DME1 Engine Control Unit
-//   MB1 == 0x329 DME2 Engine Control Unit
-//   MB2 == 0x338 DME3 Engine Control Unit
-//   MB3 == 0x545 DME4 Engine Control Unit
+// For testing frame values
+const uint8_t DEFAULT_VAL_DME_1[8] = { 0x05, 0x0B, 0xB8, 0x0C, 0x0B, 0x0A, 0x00, 0x77 };
+const uint8_t DEFAULT_VAL_DME_2[8] = { 0x4F, 0xB1, 0x84, 0x10, 0x00, 0x51, 0xFF, 0x00 };
+const uint8_t DEFAULT_VAL_DME_3[8] = { 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 };
+const uint8_t DEFAULT_VAL_DME_4[8] = { 0xEE, 0x8B, 0x02, 0x88, 0x00, 0x00, 0x00, 0x00 };
+
+struct MS43CanData {
+  //   MB0 == 0x316 DME1 Engine Control Unit
+  MS43_DME1_Frame valDME1 = MS43_DME1_Frame(DEFAULT_VAL_DME_1);
+  //   MB1 == 0x329 DME2 Engine Control Unit
+  MS43_DME2_Frame valDME2 = MS43_DME2_Frame(DEFAULT_VAL_DME_2);
+  //   MB2 == 0x338 DME3 Engine Control Unit
+  MS43_DME3_Frame valDME3 = MS43_DME3_Frame(DEFAULT_VAL_DME_3);
+  //   MB3 == 0x545 DME4 Engine Control Unit
+  MS43_DME4_Frame valDME4 = MS43_DME4_Frame(DEFAULT_VAL_DME_4);
+} ms43CanData;
 
 // Nextion Page State
 // stateful page variable (0 indexed, default to zero on startup)
 // indicates what page user is on and what values to send
 uint8_t valCurrentNextionPage = 0;
 
-// Nextion State struct
-// contains all Nextion pages, keys, & pointers to values
-NextionState nextionState;
-
 // Check Engine Light (CEL) State
 // val: 't' for ON, 'f' for OFF
-const char NEXTION_KEY_CEL_IS_ON[8] = "CELIsOn"; // declare one extra char
-const uint8_t DEFAULT_VAL_CEL_IS_ON = (uint8_t) 'f';
-uint8_t valCelIsOn = DEFAULT_VAL_CEL_IS_ON;
+const char NEXTION_KEY_CEL_IS_ON[18] = "obc.cel_is_on.val"; // declare one extra char
+const uint8_t VAL_CEL_IS_ON_TRUE     = (uint8_t) '1';
+const uint8_t VAL_CEL_IS_ON_FALSE    = (uint8_t) '0';
+const uint8_t DEFAULT_VAL_CEL_IS_ON  = VAL_CEL_IS_ON_FALSE;
+uint8_t valCelIsOn                   = DEFAULT_VAL_CEL_IS_ON;
+
+// Engine Temperature in F
+const char NEXTION_KEY_ENG_TEMP_F[19] = "obc.eng_temp_f.val";
+
+// Nextion State struct
+// contains all Nextion pages, keys, & pointers to values
+NextionVariable pageOneVars[] = {
+  {
+    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (uint8_t) ms43CanData.valDME4.checkEngineLightOn(); },
+  },
+  {
+    (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
+  }
+};
+NextionPage pages[] = {
+  { // Page 1 == ???? TODO
+    pageOneVars, (sizeof(pageOneVars)/sizeof(*pageOneVars)),
+  }
+};
+NextionState nextionState = NextionState{
+  pages, (sizeof(pages)/sizeof(*pages))
+};
 
 void initCanBus(void) {
   // init CAN
@@ -63,27 +99,17 @@ void initCanBus(void) {
   Can.mailboxStatus();
 }
 
-void initNextionState(void) {
-  NextionVariable pageOneVars[] = {
-    {
-      (char*)&NEXTION_KEY_CEL_IS_ON, &valCelIsOn
-    }
-  };
-  NextionPage pages[] = {
-    { // Page 1 == ???? TODO
-      pageOneVars, (sizeof(pageOneVars)/sizeof(*pageOneVars)),
-    }
-  };
-
-  nextionState = NextionState{
-    pages, (sizeof(pages)/sizeof(*pages))
-  };
-}
-
 void setup(void) {
-  // initCanBus();
-  // initNextionState();
-  Serial.begin(9600);
+  if (CAN_ENABLE) {
+    initCanBus();
+  }
+  if (NEXTION_ENABLE) {
+    nextionSerial.begin(115200);
+  }
+  if (USB_DEBUG_ENABLE) {
+    Serial.begin(9600);
+  }
+  delay(1000);
 }
 
 void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
@@ -104,27 +130,19 @@ void filterReceiveMailbox(FLEXCAN_MAILBOX mb, _MB_ptr handler, uint32_t filter) 
 //   05 0C B8 27 0C 0B 46 80
 //   0D 00 84 27 00 0B 31 82
 void dme1Receive(const CAN_message_t &msg) {
-  MS43_DME1_Frame value = MS43_DME1_Frame(msg.buf);
-  Serial.print(value.ignitionKeyVoltageIsOn());
-  // TODO: do something with this
+  ms43CanData.valDME1.update(msg.buf);
 }
 
 void dme2Receive(const CAN_message_t &msg) {
-  MS43_DME2_Frame value = MS43_DME2_Frame(msg.buf);
-  Serial.print(value.engineIsRunning());
-  // TODO: do something with this
+  ms43CanData.valDME2.update(msg.buf);
 }
 
 void dme3Receive(const CAN_message_t &msg) {
-  MS43_DME3_Frame value = MS43_DME3_Frame(msg.buf);
-  Serial.print(value.sportButtonStatus());
-  // TODO: do something with this
+  ms43CanData.valDME3.update(msg.buf);
 }
 
 void dme4Receive(const CAN_message_t &msg) {
-  MS43_DME4_Frame value = MS43_DME4_Frame(msg.buf);
-  Serial.print(value.checkEngineLightOn());
-  // TODO: do something with this
+  ms43CanData.valDME4.update(msg.buf);
 }
 
 // Send all Nextion values for a given page
@@ -134,7 +152,7 @@ void sendValuesToNextion(const uint8_t page) {
     NextionVariable variable = nextionState.pages[page].variables[var];
     nextionSerial.print(variable.key);
     nextionSerial.print('='); // printf?
-    nextionSerial.print(*variable.value); // TODO: should this be write()?
+    nextionSerial.write(variable.value());
 
     // use three 0xff to deliminate input
     nextionSerial.write(0xff);
@@ -148,11 +166,10 @@ void loop() {
   // RECEIVE EVENTS
   // --------------------------------------------------------------------------
 
-  Serial.println("foobar");
-  delay(1000);
-
   // receive values coming in from CAN bus & update local state
-  // Can.events();
+  if (CAN_ENABLE) {
+    Can.events();
+  }
 
   // receive values from Nextion & update local state
   // TODO
@@ -165,6 +182,12 @@ void loop() {
   // TODO
 
   // emit all values for current page to Nextion
-  // sendValuesToNextion(valCurrentNextionPage);
+  if (NEXTION_ENABLE) {
+    sendValuesToNextion(valCurrentNextionPage);
+  }
 
+  if (USB_DEBUG_ENABLE) {
+    Serial.print(".");
+    delay(500);
+  }
 }

@@ -27,10 +27,12 @@ bin/ms43CanTest: $(ms43CanTestImpl) $(ms43CanHead) $(ms43CanImpl)
 bin/nextionTest: $(nextionTestImpl) $(nextionHead) $(nextionImpl)
 	$(CXX) $(CPPFLAGS) $(LDFLAGS) -o bin/nextionTest $(nextionTestImpl) $(nextionImpl) $(LDLIBS)
 
-teensy-controller/build/teensy-controller.ino.hex: $(inoLibs) teensy-controller/teensy-controller.ino
+teensy-controller/libraries/%: $(ms43CanHead) $(ms43CanImpl) $(nextionHead) $(nextionImpl)
 	$(MKDIR) -p teensy-controller/libraries/ms43-can/ && $(CP) $(ms43CanHead) teensy-controller/libraries/ms43-can/ && \
     $(CP) $(ms43CanImpl) teensy-controller/libraries/ms43-can/
 	$(MKDIR) -p teensy-controller/libraries/nextion/ &&	$(CP) $(nextionHead) teensy-controller/libraries/nextion/
+
+teensy-controller/build/teensy-controller%: teensy-controller/libraries/% teensy-controller/teensy-controller.ino
 	cd teensy-controller/ && $(ARDUINO_CLI) compile -b $(ARDUINO_CLI_BOARD) --libraries=libraries --output-dir build/
 
 build: buildCpp buildIno

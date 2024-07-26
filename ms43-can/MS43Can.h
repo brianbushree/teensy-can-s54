@@ -5,16 +5,18 @@
 // Received frame base class
 class MS43_Frame_Receive_Base {
   protected:
-    const uint8_t (&frame)[8];
-    MS43_Frame_Receive_Base(const uint8_t (&f)[8]);
+    uint8_t frame[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     float celciusToFahrenheit(float celcius) const;
     float pedalValueToPercent(uint8_t val) const;
+  public:
+    MS43_Frame_Receive_Base(const uint8_t (&f)[8]);
+    void update(const uint8_t (&f)[8]);
 };
 
 // Send frame base class
 class MS43_Frame_Send_Base {
   protected:
-    uint8_t frame[8];
+    uint8_t frame[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   public:
     // Create a MS43_DME2_Frame view from frame
     MS43_Frame_Send_Base();
@@ -41,7 +43,7 @@ typedef enum MS43_DME1_CHARGE_INTRV_STATE {
 
 // DME1 : 0x316
 // Refresh Rate: 10ms
-class MS43_DME1_Frame : private MS43_Frame_Receive_Base {
+class MS43_DME1_Frame : public MS43_Frame_Receive_Base {
 
   public:
 
@@ -154,7 +156,7 @@ typedef enum MS43_DME2_CRUISE_STATE {
 
 // DME2 : 0x329
 // Refresh Rate: 10ms
-class MS43_DME2_Frame : private MS43_Frame_Receive_Base {
+class MS43_DME2_Frame : public MS43_Frame_Receive_Base {
 
   public:
 
@@ -268,7 +270,7 @@ typedef enum MS43_DME3_SPORT_BUTTON_STATUS {
 
 // DME3 : 0x338
 // Refresh Rate: 1000ms and at signal change
-class MS43_DME3_Frame : private MS43_Frame_Receive_Base {
+class MS43_DME3_Frame : public MS43_Frame_Receive_Base {
 
   public:
 
@@ -283,7 +285,7 @@ class MS43_DME3_Frame : private MS43_Frame_Receive_Base {
 
 // DME4 : 0x545
 // Refresh Rate: 10ms
-class MS43_DME4_Frame : private MS43_Frame_Receive_Base {
+class MS43_DME4_Frame : public MS43_Frame_Receive_Base {
 
   public:
 
