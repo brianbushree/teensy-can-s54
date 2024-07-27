@@ -28,5 +28,4 @@ float MS43_Frame_Receive_Base::pedalValueToPercent(uint8_t val) const {
 }
 
 // Init the send frames with zero values
-MS43_Frame_Send_Base::MS43_Frame_Send_Base() :
- frame{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} {}
+MS43_Frame_Send_Base::MS43_Frame_Send_Base() {}

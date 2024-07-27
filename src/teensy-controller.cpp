@@ -2,9 +2,9 @@
  * Teensy 4.0 CAN S54 data to Nextion display
  */
 
-#include <FlexCAN_T4.h>
-#include <MS43Can.h>
-#include <Nextion.h>
+#include "FlexCAN_T4.h"
+#include "MS43Can.h"
+#include "Nextion.h"
 
 #define nextionSerial Serial2
 
@@ -70,6 +70,39 @@ NextionState nextionState = NextionState{
   pages, (sizeof(pages)/sizeof(*pages))
 };
 
+void filterReceiveMailbox(FLEXCAN_MAILBOX mb, _MB_ptr handler, uint32_t filter) {
+  Can.onReceive(mb, handler);
+  Can.setMBUserFilter(mb, filter, 0xFF); // final param is a bit mask
+}
+
+void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
+  Can.setMB(mb, RX, EXT);
+}
+
+void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
+  Can.setMB(mb, TX, EXT);
+}
+
+// Examples:
+//   05 0B B8 0C 0B 0A 00 77
+//   05 0C B8 27 0C 0B 46 80
+//   0D 00 84 27 00 0B 31 82
+void dme1Receive(const CAN_message_t &msg) {
+  ms43CanData.valDME1.update(msg.buf);
+}
+
+void dme2Receive(const CAN_message_t &msg) {
+  ms43CanData.valDME2.update(msg.buf);
+}
+
+void dme3Receive(const CAN_message_t &msg) {
+  ms43CanData.valDME3.update(msg.buf);
+}
+
+void dme4Receive(const CAN_message_t &msg) {
+  ms43CanData.valDME4.update(msg.buf);
+}
+
 void initCanBus(void) {
   // init CAN
   Can.begin();
@@ -110,39 +143,6 @@ void setup(void) {
     Serial.begin(9600);
   }
   delay(1000);
-}
-
-void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
-  Can.setMB(mb, RX, EXT);
-}
-
-void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
-  Can.setMB(mb, TX, EXT);
-}
-
-void filterReceiveMailbox(FLEXCAN_MAILBOX mb, _MB_ptr handler, uint32_t filter) {
-  Can.onReceive(mb, handler);
-  Can.setMBUserFilter(mb, filter, 0xFF); // final param is a bit mask
-}
-
-// Examples:
-//   05 0B B8 0C 0B 0A 00 77
-//   05 0C B8 27 0C 0B 46 80
-//   0D 00 84 27 00 0B 31 82
-void dme1Receive(const CAN_message_t &msg) {
-  ms43CanData.valDME1.update(msg.buf);
-}
-
-void dme2Receive(const CAN_message_t &msg) {
-  ms43CanData.valDME2.update(msg.buf);
-}
-
-void dme3Receive(const CAN_message_t &msg) {
-  ms43CanData.valDME3.update(msg.buf);
-}
-
-void dme4Receive(const CAN_message_t &msg) {
-  ms43CanData.valDME4.update(msg.buf);
 }
 
 // Send all Nextion values for a given page

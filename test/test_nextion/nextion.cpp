@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <iostream>
-#include "../Nextion.h"
+#include "Nextion.h"
+#include "unity.h"
 
 class TestValues {
 
@@ -24,7 +25,7 @@ class TestValues {
 
 TestValues test = TestValues();
 
-int main(int argc, char const *argv[]) {
+void test_nextionPrintValues() {
 
   char keyOne[5] = "test"; // declare one extra char
 
@@ -86,4 +87,21 @@ int main(int argc, char const *argv[]) {
     }
     std::cout << "}" << std::endl;
   }
+  TEST_ASSERT_TRUE(true);
+}
+
+void setUp(void) {
+}
+
+void tearDown(void) {
+}
+
+int runUnityTests(void) {
+  UNITY_BEGIN();
+  RUN_TEST(test_nextionPrintValues);
+  return UNITY_END();
+}
+
+int main(void) {
+  return runUnityTests();
 }

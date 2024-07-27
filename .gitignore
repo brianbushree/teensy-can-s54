@@ -1,3 +1,4 @@
 bin/*
-teensy-controller/libraries
-teensy-controller/build
+lib/FlexCAN_T4
+.pio
+.vscode

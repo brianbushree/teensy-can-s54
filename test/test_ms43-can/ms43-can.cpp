@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <iostream>
-#include "../MS43Can.h"
+#include "MS43Can.h"
+#include "unity.h"
 
 void printDME1(std::ostream &os, const MS43_DME1_Frame &dme1) {
   os << "MS43_DME1_Frame{" << "\n";
@@ -68,8 +69,7 @@ void printDME4(std::ostream &os, const MS43_DME4_Frame &dme4) {
   os << "}" << "\n";
 }
 
-int main(int argc, char const *argv[])
-{
+void test_ms43PrintValues() {
   uint8_t dme1[8] = { 0x05, 0x0B, 0xB8, 0x0C, 0x0B, 0x0A, 0x00, 0x77 };
   // uint8_t dme1[8] = { 0x05, 0x0C, 0xB8, 0x27, 0x0C, 0x0B, 0x46, 0x80 };
   // uint8_t dme1[8] = { 0x0D, 0x00, 0x84, 0x27, 0x00, 0x0B, 0x31, 0x82 };
@@ -92,4 +92,22 @@ int main(int argc, char const *argv[])
   uint8_t dme4[8] = { 0xEE, 0x8B, 0x02, 0x88, 0x00, 0x00, 0x00, 0x00 };
   MS43_DME4_Frame d4 = MS43_DME4_Frame(dme4);
   printDME4(std::cout, d4);
+
+  TEST_ASSERT_TRUE(true);
+}
+
+void setUp(void) {
+}
+
+void tearDown(void) {
+}
+
+int runUnityTests(void) {
+  UNITY_BEGIN();
+  RUN_TEST(test_ms43PrintValues);
+  return UNITY_END();
+}
+
+int main(void) {
+  return runUnityTests();
 }
