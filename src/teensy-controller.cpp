@@ -41,15 +41,18 @@ struct MS43CanData {
 uint8_t valCurrentNextionPage = 0;
 
 // Check Engine Light (CEL) State
-// val: 't' for ON, 'f' for OFF
-const char NEXTION_KEY_CEL_IS_ON[18] = "obc.cel_is_on.val"; // declare one extra char
+// val: '1' for ON, '0' for OFF
+const char NEXTION_KEY_CEL_IS_ON[]   = "obc.cel_is_on.val";
 const uint8_t VAL_CEL_IS_ON_TRUE     = (uint8_t) '1';
 const uint8_t VAL_CEL_IS_ON_FALSE    = (uint8_t) '0';
 const uint8_t DEFAULT_VAL_CEL_IS_ON  = VAL_CEL_IS_ON_FALSE;
 uint8_t valCelIsOn                   = DEFAULT_VAL_CEL_IS_ON;
 
 // Engine Temperature in F
-const char NEXTION_KEY_ENG_TEMP_F[19] = "obc.eng_temp_f.val";
+const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
+
+// Engine Speed in RPM
+const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 
 // Nextion State struct
 // contains all Nextion pages, keys, & pointers to values
@@ -59,6 +62,9 @@ NextionVariable pageOneVars[] = {
   },
   {
     (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
+  },
+  {
+    (char*)&NEXTION_KEY_ENG_SPEED_RPM, [] { return (uint8_t) ms43CanData.valDME1.engineSpeedRPM(); },
   }
 };
 NextionPage pages[] = {

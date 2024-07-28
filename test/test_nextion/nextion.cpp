@@ -27,13 +27,13 @@ TestValues test = TestValues();
 
 void test_nextionPrintValues() {
 
-  char keyOne[5] = "test"; // declare one extra char
+  char keyOne[] = "test";
 
-  char keyTwo[5] = "blah"; // declare one extra char
+  char keyTwo[] = "blah";
 
-  char keyThree[4] = "foo"; // declare one extra char
+  char keyThree[] = "foo";
 
-  char keyFour[4] = "bar"; // declare one extra char
+  char keyFour[] = "bar";
 
   NextionVariable variables[] = {
     {
