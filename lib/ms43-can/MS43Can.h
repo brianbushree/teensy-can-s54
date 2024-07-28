@@ -2,21 +2,23 @@
 #define MS43Can_H
 #include <stdint.h>
 
+#define CAN_FRAME_SIZE_BYTES 8
+
 // Received frame base class
 class MS43_Frame_Receive_Base {
   protected:
-    uint8_t frame[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t frame[CAN_FRAME_SIZE_BYTES] = { };
     float celciusToFahrenheit(float celcius) const;
     float pedalValueToPercent(uint8_t val) const;
   public:
-    MS43_Frame_Receive_Base(const uint8_t (&f)[8]);
-    void update(const uint8_t (&f)[8]);
+    MS43_Frame_Receive_Base(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
+    void update(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 };
 
 // Send frame base class
 class MS43_Frame_Send_Base {
   protected:
-    uint8_t frame[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t frame[CAN_FRAME_SIZE_BYTES] = { };
   public:
     // Create a MS43_DME2_Frame view from frame
     MS43_Frame_Send_Base();
@@ -48,7 +50,7 @@ class MS43_DME1_Frame : public MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME1_Frame view from frame
-    MS43_DME1_Frame(const uint8_t (&f)[8]);
+    MS43_DME1_Frame(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 
     // LV_SWI_IGK:
     // false - terminal 15 off detected
@@ -161,7 +163,7 @@ class MS43_DME2_Frame : public MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME2_Frame(const uint8_t (&f)[8]);
+    MS43_DME2_Frame(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 
     // TEMP_ENG:
     // Engine (Coolant) Temperature in °C
@@ -275,7 +277,7 @@ class MS43_DME3_Frame : public MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME3_Frame(const uint8_t (&f)[8]);
+    MS43_DME3_Frame(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 
     // STATE_SOF_CAN:
     // Sport Button Status
@@ -290,7 +292,7 @@ class MS43_DME4_Frame : public MS43_Frame_Receive_Base {
   public:
 
     // Create a MS43_DME2_Frame view from frame
-    MS43_DME4_Frame(const uint8_t (&f)[8]);
+    MS43_DME4_Frame(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 
     // LV_MIL:
     // Check Engine Light

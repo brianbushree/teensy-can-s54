@@ -1,11 +1,11 @@
 #include "MS43Can.h"
 
-MS43_Frame_Receive_Base::MS43_Frame_Receive_Base(const uint8_t (&f)[8]) {
+MS43_Frame_Receive_Base::MS43_Frame_Receive_Base(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]) {
   update(f);
 };
 
-void MS43_Frame_Receive_Base::update(const uint8_t (&f)[8]) {
-  for (int i = 0; i < 8; i++) {
+void MS43_Frame_Receive_Base::update(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]) {
+  for (int i = 0; i < CAN_FRAME_SIZE_BYTES; i++) {
     frame[i] = f[i];
   }
 };

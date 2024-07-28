@@ -1,6 +1,6 @@
 #include "MS43Can.h"
 
-MS43_DME1_Frame::MS43_DME1_Frame(const uint8_t (&f)[8]) : MS43_Frame_Receive_Base(f) {};
+MS43_DME1_Frame::MS43_DME1_Frame(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]) : MS43_Frame_Receive_Base(f) {};
 
 bool MS43_DME1_Frame::ignitionKeyVoltageIsOn() const {
   return frame[0] & 0b00000001;
