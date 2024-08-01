@@ -24,6 +24,19 @@ const uint8_t DEFAULT_VAL_DME_2[CAN_FRAME_SIZE_BYTES] = { 0x4F, 0xB1, 0x84, 0x10
 const uint8_t DEFAULT_VAL_DME_3[CAN_FRAME_SIZE_BYTES] = { 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 };
 const uint8_t DEFAULT_VAL_DME_4[CAN_FRAME_SIZE_BYTES] = { 0xEE, 0x8B, 0x02, 0x88, 0x00, 0x00, 0x00, 0x00 };
 
+// Nextion Receive buffer 9 bytes ( '0xf1 CEL 0001 0xff' )
+// 2 bytes for start + end delim
+// 3 bytes for commmand
+// 4 bytes for value
+const int NEXTION_BUF_SIZE_BYTES = 10;
+uint8_t valNextionRXBuffer[NEXTION_BUF_SIZE_BYTES];
+int valNextionRXBufferPos = 0;
+bool valNextionRXInProgress = false;
+struct NextionCommand {
+  char command[4]; // extra byte for terminator
+  uint8_t value[4];
+};
+
 struct MS43CanData {
   //   MB0 == 0x316 DME1 Engine Control Unit
   MS43_DME1_Frame valDME1 = MS43_DME1_Frame(DEFAULT_VAL_DME_1);
@@ -58,7 +71,7 @@ const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 // contains all Nextion pages, keys, & pointers to values
 NextionVariable pageOneVars[] = {
   {
-    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (uint8_t) ms43CanData.valDME4.checkEngineLightOn(); },
+    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE) ? VAL_CEL_IS_ON_TRUE : VAL_CEL_IS_ON_FALSE; },
   },
   {
     (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
@@ -87,6 +100,43 @@ void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
 
 void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
   Can.setMB(mb, TX, EXT);
+}
+
+void nextionReceiveCommand(NextionCommand *cmd) {
+  if (strcmp(cmd->command, "CEL") == 0) {
+    if (cmd->value[0] == VAL_CEL_IS_ON_TRUE) {
+      valCelIsOn = VAL_CEL_IS_ON_TRUE;
+    } else if (cmd->value[0] == VAL_CEL_IS_ON_FALSE) {
+      valCelIsOn = VAL_CEL_IS_ON_FALSE;
+    }
+  }
+}
+
+// Receive values from Nextion
+void nextionReceive() {
+  while (nextionSerial.available()) {
+    uint8_t c = nextionSerial.read();
+    if (!valNextionRXInProgress) {
+      // start message
+      if (c == 0xfe) {
+        valNextionRXBufferPos = 0;
+        valNextionRXInProgress = true;
+      }
+    } else {
+      // end of command
+      if (c == 0xff) {
+        valNextionRXInProgress = false;
+        NextionCommand cmd = {
+          .command = { (char) valNextionRXBuffer[0], (char) valNextionRXBuffer[1], (char) valNextionRXBuffer[2], '\0' },
+          .value   = { valNextionRXBuffer[3], valNextionRXBuffer[4], valNextionRXBuffer[5], valNextionRXBuffer[6] }
+        };
+        nextionReceiveCommand(&cmd);
+      } else {
+        valNextionRXBuffer[valNextionRXBufferPos] = c;
+        valNextionRXBufferPos += 1;
+      }
+    }
+  }
 }
 
 // Examples:
@@ -154,13 +204,9 @@ void setup(void) {
 // Send all Nextion values for a given page
 void sendValuesToNextion(const uint8_t page) {
   for (int var= 0; var < nextionState.pages[page].variablesLength; var++) {
-    // send variable as "KEY=V"
     NextionVariable variable = nextionState.pages[page].variables[var];
-    nextionSerial.print(variable.key);
-    nextionSerial.print('='); // printf?
-    nextionSerial.write(variable.value());
-
-    // use three 0xff to deliminate input
+    nextionSerial.printf("%s=%c", variable.key, variable.value());
+    // use three 0xff to deliminate input (Nextion format)
     nextionSerial.write(0xff);
     nextionSerial.write(0xff);
     nextionSerial.write(0xff);
@@ -178,7 +224,9 @@ void loop() {
   }
 
   // receive values from Nextion & update local state
-  // TODO
+  if (NEXTION_ENABLE) {
+    nextionReceive();
+  }
 
   //
   // EMIT EVENTS
