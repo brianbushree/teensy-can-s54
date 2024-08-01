@@ -11,7 +11,7 @@
 // Use these to disable/enable units when unplugged
 const bool CAN_ENABLE       = false;
 const bool NEXTION_ENABLE   = true;
-const bool USB_DEBUG_ENABLE = true;
+const bool USB_DEBUG_ENABLE = false;
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
 
@@ -54,10 +54,10 @@ struct MS43CanData {
 uint8_t valCurrentNextionPage = 0;
 
 // Check Engine Light (CEL) State
-// val: '1' for ON, '0' for OFF
+// val: 1 for ON, 0 for OFF
 const char NEXTION_KEY_CEL_IS_ON[]   = "obc.cel_is_on.val";
-const uint8_t VAL_CEL_IS_ON_TRUE     = (uint8_t) '1';
-const uint8_t VAL_CEL_IS_ON_FALSE    = (uint8_t) '0';
+const uint8_t VAL_CEL_IS_ON_TRUE     = 1;
+const uint8_t VAL_CEL_IS_ON_FALSE    = 0;
 const uint8_t DEFAULT_VAL_CEL_IS_ON  = VAL_CEL_IS_ON_FALSE;
 uint8_t valCelIsOn                   = DEFAULT_VAL_CEL_IS_ON;
 
@@ -104,9 +104,9 @@ void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
 
 void nextionReceiveCommand(NextionCommand *cmd) {
   if (strcmp(cmd->command, "CEL") == 0) {
-    if (cmd->value[0] == VAL_CEL_IS_ON_TRUE) {
+    if (cmd->value[0] == '1') {
       valCelIsOn = VAL_CEL_IS_ON_TRUE;
-    } else if (cmd->value[0] == VAL_CEL_IS_ON_FALSE) {
+    } else if (cmd->value[0] == '0') {
       valCelIsOn = VAL_CEL_IS_ON_FALSE;
     }
   }
@@ -205,7 +205,7 @@ void setup(void) {
 void sendValuesToNextion(const uint8_t page) {
   for (int var= 0; var < nextionState.pages[page].variablesLength; var++) {
     NextionVariable variable = nextionState.pages[page].variables[var];
-    nextionSerial.printf("%s=%c", variable.key, variable.value());
+    nextionSerial.printf("%s=%d", variable.key, variable.value());
     // use three 0xff to deliminate input (Nextion format)
     nextionSerial.write(0xff);
     nextionSerial.write(0xff);
