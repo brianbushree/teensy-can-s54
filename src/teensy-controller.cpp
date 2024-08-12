@@ -7,10 +7,12 @@
 #include "Nextion.h"
 
 #define nextionSerial Serial2
+#define celDigtlPin   PIND3
 
 // Use these to disable/enable units when unplugged
 const bool CAN_ENABLE       = false;
 const bool NEXTION_ENABLE   = true;
+const bool CEL_DIGTL_ENABLE = true;
 const bool USB_DEBUG_ENABLE = false;
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
@@ -67,11 +69,15 @@ const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
 // Engine Speed in RPM
 const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 
+bool isCELOn() {
+   return ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE;
+}
+
 // Nextion State struct
 // contains all Nextion pages, keys, & pointers to values
 NextionVariable pageOneVars[] = {
   {
-    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE) ? VAL_CEL_IS_ON_TRUE : VAL_CEL_IS_ON_FALSE; },
+    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (isCELOn()) ? VAL_CEL_IS_ON_TRUE : VAL_CEL_IS_ON_FALSE; },
   },
   {
     (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
@@ -195,6 +201,9 @@ void setup(void) {
   if (NEXTION_ENABLE) {
     nextionSerial.begin(115200);
   }
+  if (CEL_DIGTL_ENABLE) {
+    pinMode(celDigtlPin, OUTPUT);
+  }
   if (USB_DEBUG_ENABLE) {
     Serial.begin(9600);
   }
@@ -210,6 +219,14 @@ void sendValuesToNextion(const uint8_t page) {
     nextionSerial.write(0xff);
     nextionSerial.write(0xff);
     nextionSerial.write(0xff);
+  }
+}
+
+void sendCELToDashboard() {
+  if (isCELOn()) {
+    digitalWrite(celDigtlPin, HIGH);
+  } else {
+    digitalWrite(celDigtlPin, LOW);
   }
 }
 
@@ -238,6 +255,10 @@ void loop() {
   // emit all values for current page to Nextion
   if (NEXTION_ENABLE) {
     sendValuesToNextion(valCurrentNextionPage);
+  }
+
+  if (CEL_DIGTL_ENABLE) {
+    sendCELToDashboard();
   }
 
   if (USB_DEBUG_ENABLE) {
