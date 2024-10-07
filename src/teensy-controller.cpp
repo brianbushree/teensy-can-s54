@@ -48,7 +48,13 @@ struct MS43CanData {
   MS43_DME3_Frame valDME3 = MS43_DME3_Frame(DEFAULT_VAL_DME_3);
   //   MB3 == 0x545 DME4 Engine Control Unit
   MS43_DME4_Frame valDME4 = MS43_DME4_Frame(DEFAULT_VAL_DME_4);
+
+  //   MB4 == 0x615 ICL3 Instrument Cluster Send Frame
+  MS43_ICL3_Frame valICL3 = MS43_ICL3_Frame();
 } ms43CanData;
+
+// Is AC compressor on? If so we need to tell the ECU to increase the idle temp
+bool isACOn = false;
 
 // Nextion Page State
 // stateful page variable (0 indexed, default to zero on startup)
@@ -69,6 +75,13 @@ const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
 // Engine Speed in RPM
 const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 
+// Is AC ON?
+const char NEXTION_IS_AC_ON[]       = "obc.is_ac_on.val";
+const uint8_t VAL_AC_IS_ON_TRUE     = 1;
+const uint8_t VAL_AC_IS_ON_FALSE    = 0;
+const uint8_t DEFAULT_VAL_AC_IS_ON  = VAL_AC_IS_ON_FALSE;
+uint8_t valAcIsOn                   = DEFAULT_VAL_CEL_IS_ON;
+
 bool isCELOn() {
    return ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE;
 }
@@ -84,7 +97,10 @@ NextionVariable pageOneVars[] = {
   },
   {
     (char*)&NEXTION_KEY_ENG_SPEED_RPM, [] { return (uint8_t) ms43CanData.valDME1.engineSpeedRPM(); },
-  }
+  },
+  {
+    (char*)&NEXTION_IS_AC_ON, [] { return valAcIsOn; },
+  },
 };
 NextionPage pages[] = {
   { // Page 1 == ???? TODO
@@ -116,6 +132,7 @@ void nextionReceiveCommand(NextionCommand *cmd) {
       valCelIsOn = VAL_CEL_IS_ON_FALSE;
     }
   }
+  // TODO: else if AC is on ...
 }
 
 // Receive values from Nextion
@@ -229,6 +246,11 @@ void sendCELToDashboard() {
     digitalWrite(celDigtlPin, LOW);
   }
 }
+
+// TODO: timed sending of CAN data (send every 200ms)
+// static uint32_t sendTimer = millis();
+// if ( millis() - sendTimer > 1000 ) {
+// ...
 
 void loop() {
   //

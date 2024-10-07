@@ -4,14 +4,20 @@
 
 #define CAN_FRAME_SIZE_BYTES 8
 
+float celciusToFahrenheit(float tempC);
+float fahrenheitToCelcius(float tempF);
+int kmhToMph(int kmh);
+int mphToKmh(int mph);
+float pedalValueToPercent(uint8_t val);
+
 // Received frame base class
 class MS43_Frame_Receive_Base {
   protected:
     uint8_t frame[CAN_FRAME_SIZE_BYTES] = { };
-    float celciusToFahrenheit(float celcius) const;
-    float pedalValueToPercent(uint8_t val) const;
   public:
+    // Create a ReceiveFrame
     MS43_Frame_Receive_Base(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
+    // Update the frame
     void update(const uint8_t (&f)[CAN_FRAME_SIZE_BYTES]);
 };
 
@@ -20,8 +26,9 @@ class MS43_Frame_Send_Base {
   protected:
     uint8_t frame[CAN_FRAME_SIZE_BYTES] = { };
   public:
-    // Create a MS43_DME2_Frame view from frame
+    // Create a SendFrame
     MS43_Frame_Send_Base();
+    // Serialize the frame
     uint8_t* serialize();
 };
 
@@ -404,6 +411,103 @@ class MS43_DME4_Frame : public MS43_Frame_Receive_Base {
     // false - normal
     // true  - low pressure
     bool engineOilPressureLow() const;
+};
+
+// ICL3 : 0x615
+// Refresh Rate: 200ms
+class MS43_ICL3_Frame : public MS43_Frame_Send_Base {
+
+  public:
+
+    // Create a MS43_DME1_Frame view from frame
+    MS43_ICL3_Frame();
+
+    // Set torque offset for air conditioning compressor
+    // Must be a value between 0-31 (inclusive) in NM
+    void setTorqueOffsetForACCompressor(int torqueOffset);
+
+    // Set request for lowering cooling temp (c_tco_bol_ect)
+    // false - OFF
+    // true  - ON
+    void setRequestForLoweringCoolingTempEnabled(bool enabled);
+
+    // Set AC compressor status
+    // false - OFF
+    // true  - ON
+    void setACCompressorStatusEnabled(bool enabled);
+
+    // Set air conditioning request
+    // false - OFF
+    // true  - ON
+    void setAirConditioningRequestEnabled(bool enabled);
+
+    // Set increased heat request
+    // false - OFF
+    // true  - ON
+    void setIncreasedHeatRequestEnabled(bool enabled);
+
+    // Set trailer operation mode
+    // false - OFF
+    // true  - ON
+    void setTrailerOperationModeEnabled(bool enabled);
+
+    // Set day/night lighting
+    // false - day lighting
+    // true  - night lighting
+    // TODO: need to confirm this
+    void setDayNightLightingEnabled(bool nightEnabled);
+
+    // Set Hood Switch
+    // false - hood closed
+    // true  - hood open
+    // TODO: need to confirm this
+    void setHoodSwitchEnabled(bool enabled);
+
+    // Set electric cooling fan level
+    // step value 0-15 (inclusive)
+    void setElectricCoolingFanLevel(int level);
+
+    // Set request raised idle
+    // false - no raised idle
+    // true  - raised idle
+    void setRequestRaisedIdleEnabled(bool enabled);
+
+    // Set amblient air temperature in °C
+    // min: -40°C
+    // max:  49°C
+    // Note: this comes from a sensor directly wired to the instrument cluster
+    void setAmbientAirTempC(int tempC);
+
+    // Set amblient air temperature in °F
+    // min: -40°F
+    // max: 120°F
+    // Note: this comes from a sensor directly wired to the instrument cluster
+    void setAmbientAirTempF(int tempF);
+
+    // Set door switch
+    // false - door closed
+    // true  - door open
+    void setDoorSwitchEnabled(bool enabled);
+
+    // Set hand brake switch
+    // false - hand brake off
+    // true  - hand brake on
+    void setHandBrakeSwitchEnabled(bool enabled);
+
+    // Set suspension level
+    // Used for the auto-leveling xenons ???
+    // value 0-15 (inclusive)
+    void setSuspensionLevel(int level);
+
+    // Set displayed vehicle speed in KPH
+    // 10 bits, 0-1023 (inclusive) ???
+    // Seems to be calculated from the wheel speed sensors that come in on "0x1F0"
+    void setDisplayedVehicleSpeedKph(uint16_t speed);
+
+    // Set displayed vehicle speed in MPH
+    // 10 bits, 0-1023 (inclusive) ???
+    // Seems to be calculated from the wheel speed sensors that come in on "0x1F0"
+    void setDisplayedVehicleSpeedMph(uint16_t speed);
 };
 
 #endif
