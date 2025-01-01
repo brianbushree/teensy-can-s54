@@ -10,10 +10,11 @@
 #define celDigtlPin   PIND3
 
 // Use these to disable/enable units when unplugged
-const bool CAN_ENABLE       = false;
-const bool NEXTION_ENABLE   = true;
-const bool CEL_DIGTL_ENABLE = true;
-const bool USB_DEBUG_ENABLE = false;
+const bool CAN_ENABLE         = false;
+const bool CAN_TRASMIT_ENABLE = false;
+const bool NEXTION_ENABLE     = true;
+const bool CEL_DIGTL_ENABLE   = true;
+const bool USB_DEBUG_ENABLE   = false;
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can; // For CAN communications between devices, use the "CAN2" port/pins on a Teensy 4.0
 
@@ -52,6 +53,14 @@ struct MS43CanData {
   //   MB4 == 0x615 ICL3 Instrument Cluster Send Frame
   MS43_ICL3_Frame valICL3 = MS43_ICL3_Frame();
 } ms43CanData;
+
+struct SendTimers {
+  uint32_t Nextion_lastSend = millis();
+  uint8_t Nextion_sendRateMs = 50;
+
+  uint32_t MS43_ICL3_Frame_lastSend = millis();
+  uint8_t MS43_ICL3_sendRateMs      = 200;
+} sendTimers;
 
 // Is AC compressor on? If so we need to tell the ECU to increase the idle temp
 bool isACOn = false;
@@ -194,9 +203,9 @@ void initCanBus(void) {
   setupReceiveMailbox(MB2);
   setupReceiveMailbox(MB3);
 
-  // TODO: setup transmit
-  // setupTransmitMailbox(MB4);
-  // setupTransmitMailbox(MB5);
+  if (CAN_TRASMIT_ENABLE) {
+    setupTransmitMailbox(MB4);
+  }
 
   // apply default reject filter & interrupts
   Can.setMBFilter(REJECT_ALL);
@@ -228,14 +237,18 @@ void setup(void) {
 }
 
 // Send all Nextion values for a given page
-void sendValuesToNextion(const uint8_t page) {
-  for (int var= 0; var < nextionState.pages[page].variablesLength; var++) {
-    NextionVariable variable = nextionState.pages[page].variables[var];
-    nextionSerial.printf("%s=%d", variable.key, variable.value());
-    // use three 0xff to deliminate input (Nextion format)
-    nextionSerial.write(0xff);
-    nextionSerial.write(0xff);
-    nextionSerial.write(0xff);
+void sendValuesToNextion(u_int32_t currentTimeMs, const uint8_t page) {
+  if (currentTimeMs - sendTimers.Nextion_lastSend > sendTimers.Nextion_sendRateMs) {
+    sendTimers.Nextion_lastSend = currentTimeMs;
+
+    for (int var= 0; var < nextionState.pages[page].variablesLength; var++) {
+      NextionVariable variable = nextionState.pages[page].variables[var];
+      nextionSerial.printf("%s=%d", variable.key, variable.value());
+      // use three 0xff to deliminate input (Nextion format)
+      nextionSerial.write(0xff);
+      nextionSerial.write(0xff);
+      nextionSerial.write(0xff);
+    }
   }
 }
 
@@ -245,6 +258,26 @@ void sendCELToDashboard() {
   } else {
     digitalWrite(celDigtlPin, LOW);
   }
+}
+
+void sendICL3ToDME(u_int32_t currentTimeMs) {
+  // check if it is time to send
+  if (currentTimeMs - sendTimers.MS43_ICL3_Frame_lastSend > sendTimers.MS43_ICL3_sendRateMs) {
+    sendTimers.MS43_ICL3_Frame_lastSend = currentTimeMs;
+    // construct + send message
+    CAN_message_t msg;
+    u_int8_t* data = ms43CanData.valICL3.serialize();
+    msg.id = 0x615;
+    msg.len = 8;
+    for (int i = 0; i < 8; i++) {
+      msg.buf[i] = data[i];
+    }
+    Can.write(MB4, msg);
+  }
+}
+
+void sendValuesToDME(u_int32_t currentTimeMs) {
+  sendICL3ToDME(currentTimeMs);
 }
 
 // TODO: timed sending of CAN data (send every 200ms)
@@ -271,12 +304,18 @@ void loop() {
   // EMIT EVENTS
   // --------------------------------------------------------------------------
 
+  // used to determine which values to send to send and which to skip for this cycle
+  // note: doing this here to avoid the extra system call with each sender
+  u_int32_t currentTimeMs = millis();
+
   // emit all values necessary for CAN bus
-  // TODO
+  if (CAN_ENABLE && CAN_TRASMIT_ENABLE) {
+    sendValuesToDME(currentTimeMs);
+  }
 
   // emit all values for current page to Nextion
   if (NEXTION_ENABLE) {
-    sendValuesToNextion(valCurrentNextionPage);
+    sendValuesToNextion(currentTimeMs, valCurrentNextionPage);
   }
 
   if (CEL_DIGTL_ENABLE) {
