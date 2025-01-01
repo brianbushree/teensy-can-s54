@@ -140,6 +140,17 @@ void nextionReceiveCommand(NextionCommand *cmd) {
     } else if (cmd->value[0] == '0') {
       valCelIsOn = VAL_CEL_IS_ON_FALSE;
     }
+  } else if (strcmp(cmd->command, "ACC") == 0) {
+    bool isACOn = false;
+    if (cmd->value[0] == '1') {
+      valAcIsOn = VAL_AC_IS_ON_TRUE;
+      isACOn = true;
+    } else if (cmd->value[0] == '0') {
+      valAcIsOn = VAL_AC_IS_ON_FALSE;
+    }
+    // if AC is ON, request higher idle via ICL3
+    ms43CanData.valICL3.setAirConditioningRequestEnabled(isACOn);
+    ms43CanData.valICL3.setRequestRaisedIdleEnabled(isACOn);
   }
   // TODO: else if AC is on ...
 }
