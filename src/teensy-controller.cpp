@@ -62,9 +62,6 @@ struct SendTimers {
   uint8_t MS43_ICL3_sendRateMs      = 200;
 } sendTimers;
 
-// Is AC compressor on? If so we need to tell the ECU to increase the idle temp
-bool isACOn = false;
-
 // Nextion Page State
 // stateful page variable (0 indexed, default to zero on startup)
 // indicates what page user is on and what values to send
@@ -85,7 +82,7 @@ const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
 const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 
 // Is AC ON?
-const char NEXTION_IS_AC_ON[]       = "obc.is_ac_on.val";
+const char NEXTION_IS_AC_ON[]       = "obc.ac_is_on.val";
 const uint8_t VAL_AC_IS_ON_TRUE     = 1;
 const uint8_t VAL_AC_IS_ON_FALSE    = 0;
 const uint8_t DEFAULT_VAL_AC_IS_ON  = VAL_AC_IS_ON_FALSE;
@@ -93,6 +90,10 @@ uint8_t valAcIsOn                   = DEFAULT_VAL_CEL_IS_ON;
 
 bool isCELOn() {
    return ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE;
+}
+
+bool isACOn() {
+   return valAcIsOn == VAL_AC_IS_ON_TRUE;
 }
 
 // Nextion State struct
@@ -108,7 +109,7 @@ NextionVariable pageOneVars[] = {
     (char*)&NEXTION_KEY_ENG_SPEED_RPM, [] { return (uint8_t) ms43CanData.valDME1.engineSpeedRPM(); },
   },
   {
-    (char*)&NEXTION_IS_AC_ON, [] { return valAcIsOn; },
+    (char*)&NEXTION_IS_AC_ON, [] { return (isACOn()) ? VAL_AC_IS_ON_TRUE : VAL_AC_IS_ON_FALSE; },
   },
 };
 NextionPage pages[] = {
@@ -152,7 +153,6 @@ void nextionReceiveCommand(NextionCommand *cmd) {
     ms43CanData.valICL3.setAirConditioningRequestEnabled(isACOn);
     ms43CanData.valICL3.setRequestRaisedIdleEnabled(isACOn);
   }
-  // TODO: else if AC is on ...
 }
 
 // Receive values from Nextion
