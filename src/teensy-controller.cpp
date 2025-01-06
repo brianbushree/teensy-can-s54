@@ -40,6 +40,10 @@ struct NextionCommand {
   uint8_t value[4];
 };
 
+// True/False values for Nextion booleans
+const uint8_t VAL_BOOLEAN_TRUE     = 1;
+const uint8_t VAL_BOOLEAN_FALSE    = 0;
+
 struct MS43CanData {
   //   MB0 == 0x316 DME1 Engine Control Unit
   MS43_DME1_Frame valDME1 = MS43_DME1_Frame(DEFAULT_VAL_DME_1);
@@ -70,10 +74,20 @@ uint8_t valCurrentNextionPage = 0;
 // Check Engine Light (CEL) State
 // val: 1 for ON, 0 for OFF
 const char NEXTION_KEY_CEL_IS_ON[]   = "obc.cel_is_on.val";
-const uint8_t VAL_CEL_IS_ON_TRUE     = 1;
-const uint8_t VAL_CEL_IS_ON_FALSE    = 0;
-const uint8_t DEFAULT_VAL_CEL_IS_ON  = VAL_CEL_IS_ON_FALSE;
+const uint8_t DEFAULT_VAL_CEL_IS_ON  = VAL_BOOLEAN_FALSE;
 uint8_t valCelIsOn                   = DEFAULT_VAL_CEL_IS_ON;
+
+// Is AC ON?
+// val: 1 for ON, 0 for OFF
+const char NEXTION_IS_AC_ON[]       = "obc.ac_is_on.val";
+const uint8_t DEFAULT_VAL_AC_IS_ON  = VAL_BOOLEAN_FALSE;
+uint8_t valAcIsOn                   = DEFAULT_VAL_CEL_IS_ON;
+
+// Oil low warning light boolean
+const char NEXTION_KEY_IS_OIL_ON[] = "obc.oil_is_on.val";
+
+// Coolant warning light boolean
+const char NEXTION_KEY_IS_COOLANT_ON[] = "obc.coolant_is_on.val";
 
 // Engine Temperature in F
 const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
@@ -81,26 +95,34 @@ const char NEXTION_KEY_ENG_TEMP_F[] = "obc.eng_temp_f.val";
 // Engine Speed in RPM
 const char NEXTION_KEY_ENG_SPEED_RPM[] = "obc.eng_speed_rpm.val";
 
-// Is AC ON?
-const char NEXTION_IS_AC_ON[]       = "obc.ac_is_on.val";
-const uint8_t VAL_AC_IS_ON_TRUE     = 1;
-const uint8_t VAL_AC_IS_ON_FALSE    = 0;
-const uint8_t DEFAULT_VAL_AC_IS_ON  = VAL_AC_IS_ON_FALSE;
-uint8_t valAcIsOn                   = DEFAULT_VAL_CEL_IS_ON;
+// Oil Temperature in F
+const char NEXTION_KEY_OIL_TEMP_F[] = "obc.oil_temp_f.val";
+
+// Oil Temperature in F
+const char NEXTION_KEY_TORQUE[] = "obc.torque.val";
 
 bool isCELOn() {
-   return ms43CanData.valDME4.checkEngineLightOn() && valCelIsOn == VAL_CEL_IS_ON_TRUE;
+   return (ms43CanData.valDME4.checkEngineLightOn() || ms43CanData.valDME4.emlLightOn()) && valCelIsOn == VAL_BOOLEAN_TRUE;
 }
 
 bool isACOn() {
-   return valAcIsOn == VAL_AC_IS_ON_TRUE;
+   return valAcIsOn == VAL_BOOLEAN_TRUE;
 }
 
 // Nextion State struct
 // contains all Nextion pages, keys, & pointers to values
 NextionVariable pageOneVars[] = {
   {
-    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (isCELOn()) ? VAL_CEL_IS_ON_TRUE : VAL_CEL_IS_ON_FALSE; },
+    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (isCELOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+  },
+  {
+    (char*)&NEXTION_IS_AC_ON, [] { return (isACOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+  },
+  {
+    (char*)&NEXTION_KEY_IS_OIL_ON, [] { return (ms43CanData.valDME4.oilLevelErrorLightOn() || ms43CanData.valDME4.engineOilPressureLow()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+  },
+  {
+    (char*)&NEXTION_KEY_IS_COOLANT_ON, [] { return (ms43CanData.valDME4.coolantOverheatingLightOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
   },
   {
     (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
@@ -109,7 +131,10 @@ NextionVariable pageOneVars[] = {
     (char*)&NEXTION_KEY_ENG_SPEED_RPM, [] { return (uint8_t) ms43CanData.valDME1.engineSpeedRPM(); },
   },
   {
-    (char*)&NEXTION_IS_AC_ON, [] { return (isACOn()) ? VAL_AC_IS_ON_TRUE : VAL_AC_IS_ON_FALSE; },
+    (char*)&NEXTION_KEY_OIL_TEMP_F, [] { return (uint8_t) ms43CanData.valDME4.oilTempF(); },
+  },
+  {
+    (char*)&NEXTION_KEY_TORQUE, [] { return (uint8_t) ms43CanData.valDME1.indicatedTorquePercent(); },
   },
 };
 NextionPage pages[] = {
@@ -137,17 +162,17 @@ void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
 void nextionReceiveCommand(NextionCommand *cmd) {
   if (strcmp(cmd->command, "CEL") == 0) {
     if (cmd->value[0] == '1') {
-      valCelIsOn = VAL_CEL_IS_ON_TRUE;
+      valCelIsOn =  VAL_BOOLEAN_TRUE;
     } else if (cmd->value[0] == '0') {
-      valCelIsOn = VAL_CEL_IS_ON_FALSE;
+      valCelIsOn = VAL_BOOLEAN_FALSE;
     }
   } else if (strcmp(cmd->command, "ACC") == 0) {
     bool isACOn = false;
     if (cmd->value[0] == '1') {
-      valAcIsOn = VAL_AC_IS_ON_TRUE;
+      valAcIsOn = VAL_BOOLEAN_TRUE;
       isACOn = true;
     } else if (cmd->value[0] == '0') {
-      valAcIsOn = VAL_AC_IS_ON_FALSE;
+      valAcIsOn = VAL_BOOLEAN_FALSE;
     }
     // if AC is ON, request higher idle via ICL3
     ms43CanData.valICL3.setAirConditioningRequestEnabled(isACOn);
