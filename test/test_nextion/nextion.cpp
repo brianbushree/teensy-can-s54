@@ -6,20 +6,20 @@
 class TestValues {
 
   public:
-  uint8_t valueOne() {
-    return (uint8_t) 'f';
+  int16_t valueOne() {
+    return (int16_t) 7000; // RPM overflow case
   }
 
-  uint8_t valueTwo() {
-    return (uint8_t) 0x01;
+  int16_t valueTwo() {
+    return (int16_t) -53; // negative temperature case
   }
 
-  uint8_t valueThree() {
-    return (uint8_t) 0;
+  int16_t valueThree() {
+    return (int16_t) 402; // max oil temp case
   }
 
-  uint8_t valueFour() {
-    return (uint8_t) 420;
+  int16_t valueFour() {
+    return (int16_t) 0; // boundary case
   }
 };
 
@@ -37,19 +37,19 @@ void test_nextionPrintValues() {
 
   NextionVariable variables[] = {
     {
-      (char*)&keyOne, [] { return test.valueOne(); },
+      (char*)&keyOne, []() -> int16_t { return test.valueOne(); },
     },
     {
-      (char*)&keyTwo, [] { return test.valueTwo(); },
+      (char*)&keyTwo, []() -> int16_t { return test.valueTwo(); },
     }
   };
 
   NextionVariable variablesTwo[] = {
     {
-      (char*)&keyThree, [] { return test.valueThree(); },
+      (char*)&keyThree, []() -> int16_t { return test.valueThree(); },
     },
     {
-      (char*)&keyFour, [] { return test.valueThree(); },
+      (char*)&keyFour, []() -> int16_t { return test.valueFour(); },
     }
   };
 
@@ -76,7 +76,7 @@ void test_nextionPrintValues() {
       NextionVariable variable = state.pages[page].variables[var];
       std::cout << "\t[";
       std::cout << variable.key << ", ";
-      std::cout << std::hex << static_cast<int>(variable.value()) << ", ";
+      std::cout << variable.value() << ", ";
 
       // use three 0xff to deliminate input
       std::cout << 0xff << ", ";
@@ -87,7 +87,13 @@ void test_nextionPrintValues() {
     }
     std::cout << "}" << std::endl;
   }
-  TEST_ASSERT_TRUE(true);
+
+  // values above uint8_t range must survive intact (this is the regression
+  // the int16_t widening fixes: 7000 used to arrive as 88, -53 as 203)
+  TEST_ASSERT_EQUAL_INT16(7000, state.pages[0].variables[0].value());
+  TEST_ASSERT_EQUAL_INT16(-53,  state.pages[0].variables[1].value());
+  TEST_ASSERT_EQUAL_INT16(402,  state.pages[1].variables[0].value());
+  TEST_ASSERT_EQUAL_INT16(0,    state.pages[1].variables[1].value());
 }
 
 void setUp(void) {

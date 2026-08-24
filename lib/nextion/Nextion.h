@@ -5,7 +5,7 @@
 typedef struct {
   // Key is Nextion variable ID
   char* key; // null-terminated string
-  uint8_t (*value)(); // function pointer to value
+  int16_t (*value)(); // function pointer to value
 } NextionVariable;
 
 typedef struct {
