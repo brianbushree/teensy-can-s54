@@ -510,4 +510,75 @@ class MS43_ICL3_Frame : public MS43_Frame_Send_Base {
     void setDisplayedVehicleSpeedMph(uint16_t speed);
 };
 
+// ICL2 : 0x613
+// Refresh Rate: 200ms
+// Sent by the instrument cluster once ICL3 (0x615) is acknowledged.
+//
+// Note: both fuel level fields are carried as whole liters, not percentages.
+class MS43_ICL2_Frame : public MS43_Frame_Send_Base {
+
+  public:
+
+    // Create a MS43_ICL2_Frame
+    MS43_ICL2_Frame();
+
+    // KM_CTR_CAN:
+    // Set the odometer reading in kilometers
+    // Stored across two bytes (LSB first) as km / 10
+    // max: 655350km
+    void setOdometerKm(uint32_t km);
+
+    // FTL_CAN:
+    // Set the fuel tank level as a percentage of a full tank
+    // min: 0%
+    // max: 100%
+    //
+    // Convenience wrapper: the frame itself carries liters, so this converts
+    // against a full tank before writing.
+    void setFuelTankLevelPercent(uint8_t percent);
+
+    // FTL_CAN:
+    // Set the fuel tank level in liters
+    // min: 0L
+    // max: 57L (0x39, a full tank)
+    //
+    // The 7-bit field counts down in liters from 0x39 toward 0x00. The low
+    // fuel light comes on around 8L remaining, below which the cluster sets
+    // the reserve bit and the byte reads 0x87 (nearly empty) down to 0x80.
+    //
+    // Also derives the driver side level, so the two stay consistent.
+    void setFuelTankLevelLiters(uint8_t liters);
+
+    // FTL_RES_CAN:
+    // Set the fuel tank reserve switch
+    // false - not in reserve
+    // true  - in reserve
+    //
+    // The cluster sets this below the low fuel threshold, where the byte
+    // reads 0x87 (nearly empty) down to 0x80 (empty).
+    void setFuelTankReserveEnabled(bool enabled);
+
+    // T_REL_CAN:
+    // Set the running clock in minutes since power was last lost
+    // Stored across two bytes (LSB first)
+    // max: 65535 minutes (~45 days) before wrapping
+    void setRunningClockMinutes(uint16_t minutes);
+
+    // FTL_CAN_L:
+    // Set the driver side fuel tank level in liters
+    // min: 0L
+    // max: 63L (the 6-bit field ceiling)
+    //
+    // The saddle tank has a sender per side, and the cluster reports the
+    // driver side in isolation so the car can spot a failed siphon pump by
+    // comparing it against the total.
+    //
+    // The driver side always empties first: it drains from full to empty over
+    // the top half of the tank, then reads zero while the passenger side
+    // drains over the bottom half. setFuelTankLevelLiters() derives this
+    // automatically, so call this afterwards only to model a deliberate
+    // imbalance.
+    void setFuelTankLevelDriverSideLiters(uint8_t liters);
+};
+
 #endif
