@@ -148,15 +148,16 @@ NextionState nextionState = NextionState{
 
 void filterReceiveMailbox(FLEXCAN_MAILBOX mb, _MB_ptr handler, uint32_t filter) {
   Can.onReceive(mb, handler);
-  Can.setMBUserFilter(mb, filter, 0xFF); // final param is a bit mask
+  Can.setMBFilter(mb, filter); // exact match on a single ID
 }
 
+// E46 IDs are standard 11-bit, not extended
 void setupReceiveMailbox(FLEXCAN_MAILBOX mb) {
-  Can.setMB(mb, RX, EXT);
+  Can.setMB(mb, RX, STD);
 }
 
 void setupTransmitMailbox(FLEXCAN_MAILBOX mb) {
-  Can.setMB(mb, TX, EXT);
+  Can.setMB(mb, TX, STD);
 }
 
 void nextionReceiveCommand(NextionCommand *cmd) {
