@@ -69,6 +69,77 @@ void printDME4(std::ostream &os, const MS43_DME4_Frame &dme4) {
   os << "}" << "\n";
 }
 
+void printICL2(std::ostream &os, uint8_t* data) {
+  os << "MS43_ICL2_Frame{" << "\n";
+  for (int i = 0; i < CAN_FRAME_SIZE_BYTES; i++) {
+    os << " byte" << i << ": " << static_cast<int>(data[i]) << "\n";
+  }
+  os << "}" << "\n";
+}
+
+// The fuel level encoding is the whole point of this frame, so assert the
+// serialized bytes rather than just printing them. Both level fields are sent
+// as whole liters against a 57L (0x39) full tank.
+void test_icl2FuelTankLevel() {
+  MS43_ICL2_Frame icl2 = MS43_ICL2_Frame();
+  uint8_t* data = icl2.serialize();
+  printICL2(std::cout, data);
+
+  // defaults: 65% of a 57L tank is 37L (0x25)
+  TEST_ASSERT_EQUAL_UINT8(37, data[2] & 0b01111111);
+  // not in reserve, so the top bit stays clear
+  TEST_ASSERT_EQUAL_UINT8(0, (data[2] & 0b10000000) >> 7);
+  // comfortably above the 8L low fuel light threshold
+  TEST_ASSERT_TRUE((data[2] & 0b01111111) > 8);
+
+  // 65% is still in the first drain phase, so the driver side holds the liters
+  // sitting above the halfway mark: 37L - 28L = 9L
+  TEST_ASSERT_EQUAL_UINT8(9, data[5] & 0b00111111);
+
+  // odometer: 150000km -> raw 15000 (0x3A98), LSB first
+  TEST_ASSERT_EQUAL_UINT8(0x98, data[0]);
+  TEST_ASSERT_EQUAL_UINT8(0x3A, data[1]);
+
+  // a full tank lands exactly on 57L, split 29L driver / 28L passenger
+  icl2.setFuelTankLevelPercent(100);
+  TEST_ASSERT_EQUAL_UINT8(57, data[2] & 0b01111111);
+  TEST_ASSERT_EQUAL_UINT8(29, data[5] & 0b00111111);
+
+  // at half a tank (28L) the driver side has just run dry
+  icl2.setFuelTankLevelPercent(50);
+  TEST_ASSERT_EQUAL_UINT8(0, data[5] & 0b00111111);
+
+  // below half the driver side stays empty while the passenger side drains,
+  // so a zero driver side is only correct once the total is under halfway
+  icl2.setFuelTankLevelPercent(25);
+  TEST_ASSERT_EQUAL_UINT8(0, data[5] & 0b00111111);
+  TEST_ASSERT_EQUAL_UINT8(14, data[2] & 0b01111111);
+
+  // liters can be set directly, bypassing the percentage conversion
+  icl2.setFuelTankLevelLiters(40);
+  TEST_ASSERT_EQUAL_UINT8(40, data[2] & 0b01111111);
+  TEST_ASSERT_EQUAL_UINT8(12, data[5] & 0b00111111); // 40L - 28L
+
+  // more liters than the tank holds is rejected, leaving the frame untouched
+  icl2.setFuelTankLevelLiters(58);
+  TEST_ASSERT_EQUAL_UINT8(40, data[2] & 0b01111111);
+
+  // out of range percentages are rejected, leaving the frame untouched
+  icl2.setFuelTankLevelPercent(101);
+  TEST_ASSERT_EQUAL_UINT8(40, data[2] & 0b01111111);
+
+  // the reserve bit sets without disturbing the level bits
+  icl2.setFuelTankLevelPercent(5);
+  icl2.setFuelTankReserveEnabled(true);
+  TEST_ASSERT_EQUAL_UINT8(1, (data[2] & 0b10000000) >> 7);
+  TEST_ASSERT_EQUAL_UINT8(0x02, data[2] & 0b01111111);
+
+  // running clock is stored LSB first across bytes 3-4
+  icl2.setRunningClockMinutes(300);
+  TEST_ASSERT_EQUAL_UINT8(300 & 0xFF, data[3]);
+  TEST_ASSERT_EQUAL_UINT8(300 >> 8, data[4]);
+}
+
 void test_ms43PrintValues() {
   uint8_t dme1[CAN_FRAME_SIZE_BYTES] = { 0x05, 0x0B, 0xB8, 0x0C, 0x0B, 0x0A, 0x00, 0x77 };
   // uint8_t dme1[CAN_FRAME_SIZE_BYTES] = { 0x05, 0x0C, 0xB8, 0x27, 0x0C, 0x0B, 0x46, 0x80 };
@@ -105,6 +176,7 @@ void tearDown(void) {
 int runUnityTests(void) {
   UNITY_BEGIN();
   RUN_TEST(test_ms43PrintValues);
+  RUN_TEST(test_icl2FuelTankLevel);
   return UNITY_END();
 }
 

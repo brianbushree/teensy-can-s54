@@ -56,6 +56,9 @@ struct MS43CanData {
 
   //   MB4 == 0x615 ICL3 Instrument Cluster Send Frame
   MS43_ICL3_Frame valICL3 = MS43_ICL3_Frame();
+
+  //   MB5 == 0x613 ICL2 Instrument Cluster Send Frame
+  MS43_ICL2_Frame valICL2 = MS43_ICL2_Frame();
 } ms43CanData;
 
 struct SendTimers {
@@ -64,6 +67,9 @@ struct SendTimers {
 
   uint32_t MS43_ICL3_Frame_lastSend = millis();
   uint16_t MS43_ICL3_sendRateMs     = 200;
+
+  uint32_t MS43_ICL2_Frame_lastSend = millis();
+  uint16_t MS43_ICL2_sendRateMs     = 200;
 } sendTimers;
 
 // Nextion Page State
@@ -242,6 +248,7 @@ void initCanBus(void) {
 
   if (CAN_TRASMIT_ENABLE) {
     setupTransmitMailbox(MB4);
+    setupTransmitMailbox(MB5);
   }
 
   // apply default reject filter & interrupts
@@ -297,24 +304,38 @@ void sendCELToDashboard() {
   }
 }
 
+// Construct & send a single frame out of the given mailbox
+void sendFrameToDME(FLEXCAN_MAILBOX mb, uint32_t id, u_int8_t* data) {
+  CAN_message_t msg;
+  msg.id = id;
+  msg.len = CAN_FRAME_SIZE_BYTES;
+  for (int i = 0; i < CAN_FRAME_SIZE_BYTES; i++) {
+    msg.buf[i] = data[i];
+  }
+  Can.write(mb, msg);
+}
+
 void sendICL3ToDME(u_int32_t currentTimeMs) {
   // check if it is time to send
   if (currentTimeMs - sendTimers.MS43_ICL3_Frame_lastSend > sendTimers.MS43_ICL3_sendRateMs) {
     sendTimers.MS43_ICL3_Frame_lastSend = currentTimeMs;
-    // construct + send message
-    CAN_message_t msg;
-    u_int8_t* data = ms43CanData.valICL3.serialize();
-    msg.id = 0x615;
-    msg.len = 8;
-    for (int i = 0; i < 8; i++) {
-      msg.buf[i] = data[i];
-    }
-    Can.write(MB4, msg);
+    sendFrameToDME(MB4, 0x615, ms43CanData.valICL3.serialize());
+  }
+}
+
+void sendICL2ToDME(u_int32_t currentTimeMs) {
+  // check if it is time to send
+  if (currentTimeMs - sendTimers.MS43_ICL2_Frame_lastSend > sendTimers.MS43_ICL2_sendRateMs) {
+    sendTimers.MS43_ICL2_Frame_lastSend = currentTimeMs;
+    // running clock counts minutes since power was last lost
+    ms43CanData.valICL2.setRunningClockMinutes(currentTimeMs / 60000);
+    sendFrameToDME(MB5, 0x613, ms43CanData.valICL2.serialize());
   }
 }
 
 void sendValuesToDME(u_int32_t currentTimeMs) {
   sendICL3ToDME(currentTimeMs);
+  sendICL2ToDME(currentTimeMs);
 }
 
 // TODO: timed sending of CAN data (send every 200ms)
