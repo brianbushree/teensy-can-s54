@@ -60,10 +60,10 @@ struct MS43CanData {
 
 struct SendTimers {
   uint32_t Nextion_lastSend = millis();
-  uint8_t Nextion_sendRateMs = 50;
+  uint16_t Nextion_sendRateMs = 50;
 
   uint32_t MS43_ICL3_Frame_lastSend = millis();
-  uint8_t MS43_ICL3_sendRateMs      = 200;
+  uint16_t MS43_ICL3_sendRateMs     = 200;
 } sendTimers;
 
 // Nextion Page State
@@ -113,28 +113,28 @@ bool isACOn() {
 // contains all Nextion pages, keys, & pointers to values
 NextionVariable pageOneVars[] = {
   {
-    (char*)&NEXTION_KEY_CEL_IS_ON, [] { return (isCELOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+    (char*)&NEXTION_KEY_CEL_IS_ON, []() -> int16_t { return (isCELOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
   },
   {
-    (char*)&NEXTION_IS_AC_ON, [] { return (isACOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+    (char*)&NEXTION_IS_AC_ON, []() -> int16_t { return (isACOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
   },
   {
-    (char*)&NEXTION_KEY_IS_OIL_ON, [] { return (ms43CanData.valDME4.oilLevelErrorLightOn() || ms43CanData.valDME4.engineOilPressureLow()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+    (char*)&NEXTION_KEY_IS_OIL_ON, []() -> int16_t { return (ms43CanData.valDME4.oilLevelErrorLightOn() || ms43CanData.valDME4.engineOilPressureLow()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
   },
   {
-    (char*)&NEXTION_KEY_IS_COOLANT_ON, [] { return (ms43CanData.valDME4.coolantOverheatingLightOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
+    (char*)&NEXTION_KEY_IS_COOLANT_ON, []() -> int16_t { return (ms43CanData.valDME4.coolantOverheatingLightOn()) ? VAL_BOOLEAN_TRUE : VAL_BOOLEAN_FALSE; },
   },
   {
-    (char*)&NEXTION_KEY_ENG_TEMP_F, [] { return (uint8_t) ms43CanData.valDME2.engineTempF(); },
+    (char*)&NEXTION_KEY_ENG_TEMP_F, []() -> int16_t { return ms43CanData.valDME2.engineTempF(); },
   },
   {
-    (char*)&NEXTION_KEY_ENG_SPEED_RPM, [] { return (uint8_t) ms43CanData.valDME1.engineSpeedRPM(); },
+    (char*)&NEXTION_KEY_ENG_SPEED_RPM, []() -> int16_t { return ms43CanData.valDME1.engineSpeedRPM(); },
   },
   {
-    (char*)&NEXTION_KEY_OIL_TEMP_F, [] { return (uint8_t) ms43CanData.valDME4.oilTempF(); },
+    (char*)&NEXTION_KEY_OIL_TEMP_F, []() -> int16_t { return ms43CanData.valDME4.oilTempF(); },
   },
   {
-    (char*)&NEXTION_KEY_TORQUE, [] { return (uint8_t) ms43CanData.valDME1.indicatedTorquePercent(); },
+    (char*)&NEXTION_KEY_TORQUE, []() -> int16_t { return ms43CanData.valDME1.indicatedTorquePercent(); },
   },
 };
 NextionPage pages[] = {
