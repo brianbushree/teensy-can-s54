@@ -10,8 +10,8 @@
 #define celDigtlPin   PIND3
 
 // Use these to disable/enable units when unplugged
-const bool CAN_ENABLE         = false;
-const bool CAN_TRASMIT_ENABLE = false;
+const bool CAN_ENABLE         = true;
+const bool CAN_TRASMIT_ENABLE = true;
 const bool NEXTION_ENABLE     = true;
 const bool CEL_DIGTL_ENABLE   = true;
 const bool USB_DEBUG_ENABLE   = false;
@@ -89,6 +89,12 @@ const char NEXTION_IS_AC_ON[]       = "obc.ac_is_on.val";
 const uint8_t DEFAULT_VAL_AC_IS_ON  = VAL_BOOLEAN_FALSE;
 uint8_t valAcIsOn                   = DEFAULT_VAL_CEL_IS_ON;
 
+// Torque the AC compressor draws at idle, in Nm, reported to the DME in ICL3
+// so it can size its idle compensation. The field is 5 bits (0-31Nm) and an
+// E46 compressor pulls roughly 15-25Nm at idle. I am maxing mine out here to
+// avoid bogging down when my power steering is being used.
+const uint8_t AC_COMPRESSOR_TORQUE_OFFSET_NM = 31;
+
 // Oil low warning light boolean
 const char NEXTION_KEY_IS_OIL_ON[] = "obc.oil_is_on.val";
 
@@ -108,7 +114,7 @@ const char NEXTION_KEY_OIL_TEMP_F[] = "obc.oil_temp_f.val";
 const char NEXTION_KEY_TORQUE[] = "obc.torque.val";
 
 bool isCELOn() {
-   return (ms43CanData.valDME4.checkEngineLightOn() || ms43CanData.valDME4.emlLightOn()) && valCelIsOn == VAL_BOOLEAN_TRUE;
+   return (ms43CanData.valDME4.checkEngineLightOn() || ms43CanData.valDME4.emlLightOn());
 }
 
 bool isACOn() {
@@ -182,8 +188,18 @@ void nextionReceiveCommand(NextionCommand *cmd) {
       valAcIsOn = VAL_BOOLEAN_FALSE;
     }
     // if AC is ON, request higher idle via ICL3
+    //
+    // All four AC fields have to move together. Requesting AC while still
+    // reporting the compressor stopped and drawing 0Nm is self contradictory:
+    // the torque offset is what the DME sizes its idle compensation from, so
+    // leaving it at zero asks for a raised idle while saying there is no load
+    // to compensate for, and the correct response to that is to do nothing.
     ms43CanData.valICL3.setAirConditioningRequestEnabled(isACOn);
     ms43CanData.valICL3.setRequestRaisedIdleEnabled(isACOn);
+    ms43CanData.valICL3.setACCompressorStatusEnabled(isACOn);
+    ms43CanData.valICL3.setTorqueOffsetForACCompressor(
+      isACOn ? AC_COMPRESSOR_TORQUE_OFFSET_NM : 0
+    );
   }
 }
 
